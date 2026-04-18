@@ -198,6 +198,40 @@
   color: rgba(35, 52, 85, 0.85);
 }
 
+/* ─── Crosshair ──────────────────────────────────────────────────────── */
+
+.atlas-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.atlas-crosshair::before,
+.atlas-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 1px;
+}
+
+.atlas-crosshair::before {
+  width: 14px;
+  height: 1.5px;
+  top: -0.75px;
+  left: -7px;
+}
+
+.atlas-crosshair::after {
+  width: 1.5px;
+  height: 14px;
+  top: -7px;
+  left: -0.75px;
+}
+
 /* ─── Tooltip (hover on object) ─────────────────────────────────────── */
 
 .atlas-tooltip {
@@ -664,6 +698,34 @@
   padding: 0.95rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.7);
   flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.atlas-chat-header-right {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.atlas-chat-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(35, 52, 85, 0.5);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.atlas-chat-close:hover {
+  color: rgba(35, 52, 85, 0.85);
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .atlas-chat-title {

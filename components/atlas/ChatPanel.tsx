@@ -3,7 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSceneStore } from '@/state/sceneStore';
 
-export function ChatPanel() {
+interface ChatPanelProps {
+  onClose?: () => void;
+}
+
+export function ChatPanel({ onClose }: ChatPanelProps) {
   const { chatHistory, isChatLoading, focusedElement, sceneGraph, sendChatMessage } = useSceneStore();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -28,13 +32,20 @@ export function ChatPanel() {
           <span className="atlas-chat-icon">◈</span>
           <span>Historical Guide</span>
         </div>
-        {sceneGraph && (
-          <div className="atlas-scene-label">
-            {sceneGraph.setting.location}
-            <br />
-            <span className="atlas-scene-period">{sceneGraph.setting.time_period}</span>
-          </div>
-        )}
+        <div className="atlas-chat-header-right">
+          {sceneGraph && (
+            <div className="atlas-scene-label">
+              {sceneGraph.setting.location}
+              <br />
+              <span className="atlas-scene-period">{sceneGraph.setting.time_period}</span>
+            </div>
+          )}
+          {onClose && (
+            <button className="atlas-chat-close" onClick={onClose} aria-label="Close guide">
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {focusedElement && (

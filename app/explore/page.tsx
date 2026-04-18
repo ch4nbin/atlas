@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { SceneViewer } from '@/components/atlas/SceneViewer';
-import { ChatPanel } from '@/components/atlas/ChatPanel';
 import { PromptInput } from '@/components/atlas/PromptInput';
 import { useSceneStore } from '@/state/sceneStore';
 import { checkHealth } from '@/lib/atlas/api';
 import '@/styles/atlas.css';
 
 export default function ExplorePage() {
-  const { setBackendOnline, sceneGraph } = useSceneStore();
+  const { setBackendOnline } = useSceneStore();
   const [mode, setMode] = useState<'checking' | 'live' | 'backend_only' | 'offline'>('checking');
 
   useEffect(() => {
@@ -37,7 +36,6 @@ export default function ExplorePage() {
       )}
       <PromptInput />
       <SceneViewer />
-      {sceneGraph && <ChatPanel />}
     </div>
   );
 }

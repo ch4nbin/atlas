@@ -4,12 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useSceneStore } from '@/state/sceneStore';
 import { parsePositionHint } from '@/lib/atlas/sceneParser';
 import type { SceneElement } from '@/lib/atlas/types';
+import { ChatPanel } from './ChatPanel';
 
 export function SceneViewer() {
   const { world, sceneGraph, isLoading, loadingStep, error, setFocusedElement } = useSceneStore();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [sparkError, setSparkError] = useState<string | null>(null);
   const [useIframeFallback, setUseIframeFallback] = useState(false);
+  const [isChatVisible, setIsChatVisible] = useState(false);
+  // Ref bridge: lets Three.js loop/handlers read/write React state without stale closures.
+  const chatVisibleRef = useRef(false);
+  const showChatSetterRef = useRef(setIsChatVisible);
+  showChatSetterRef.current = setIsChatVisible;
+  useEffect(() => { chatVisibleRef.current = isChatVisible; }, [isChatVisible]);
 
   const spzUrl =
     world?.assets?.splats?.spz_urls?.['500k'] ||
@@ -146,7 +153,23 @@ export function SceneViewer() {
         window.addEventListener('resize', onResize);
         cleanupFns.push(() => window.removeEventListener('resize', onResize));
 
+        const MOVE_KEYS = new Set(['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
+
         const onKeyDown = (e: KeyboardEvent) => {
+          // Toggle chat guide with C (unless user is typing in an input).
+          if (e.code === 'KeyC') {
+            const active = document.activeElement;
+            const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+            if (!isTyping) {
+              e.preventDefault();
+              const next = !chatVisibleRef.current;
+              chatVisibleRef.current = next;
+              showChatSetterRef.current(next);
+              return;
+            }
+          }
+          // Block movement keys while the guide is open.
+          if (chatVisibleRef.current && MOVE_KEYS.has(e.code)) return;
           keys[e.code] = true;
         };
         const onKeyUp = (e: KeyboardEvent) => {
@@ -168,10 +191,16 @@ export function SceneViewer() {
         const onMouseMove = (e: MouseEvent) => {
           lastMouseX = e.clientX;
           lastMouseY = e.clientY;
-          if (!pointerLocked) return;
-          const sensitivity = 0.002;
-          yaw -= e.movementX * sensitivity;
-          pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch - e.movementY * sensitivity));
+          if (pointerLocked) {
+            const sensitivity = 0.002;
+            yaw -= e.movementX * sensitivity;
+            pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch - e.movementY * sensitivity));
+          } else if (container) {
+            // Keep pointer in NDC for hover raycasting.
+            const rect = container.getBoundingClientRect();
+            pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          }
         };
         document.addEventListener('mousemove', onMouseMove);
         cleanupFns.push(() => document.removeEventListener('mousemove', onMouseMove));
@@ -181,10 +210,20 @@ export function SceneViewer() {
             const picked = pickHotspot();
             if (picked) {
               updateFocusUi(picked);
+              chatVisibleRef.current = true;
+              showChatSetterRef.current(true);
               return;
             }
             renderer.domElement.requestPointerLock();
             return;
+          }
+          // Pointer locked: raycast from the center of the view.
+          pointer.set(0, 0);
+          const picked = pickHotspot();
+          if (picked) {
+            updateFocusUi(picked);
+            chatVisibleRef.current = true;
+            showChatSetterRef.current(true);
           }
         };
         renderer.domElement.addEventListener('click', onCanvasClick);
@@ -310,7 +349,10 @@ export function SceneViewer() {
   return (
     <div className="atlas-scene-container">
       {spzUrl && !useIframeFallback ? (
-        <div ref={containerRef} className="atlas-world-canvas" />
+        <>
+          <div ref={containerRef} className="atlas-world-canvas" />
+          <div className="atlas-crosshair" aria-hidden="true" />
+        </>
       ) : (
         <div className="atlas-world-fallback-panel">
           <h3>Spark Renderer Could Not Start</h3>
@@ -347,9 +389,13 @@ export function SceneViewer() {
         </div>
       )}
 
+      {sceneGraph && isChatVisible && (
+        <ChatPanel onClose={() => { chatVisibleRef.current = false; setIsChatVisible(false); }} />
+      )}
+
       <div className="atlas-controls-hint">
-        Click to lock pointer and move with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>.
-        Use <kbd>Back</kbd> to return to prompt.
+        Click to lock pointer · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move ·
+        Press <kbd>C</kbd> or click a hotspot to open guide.
       </div>
     </div>
   );
