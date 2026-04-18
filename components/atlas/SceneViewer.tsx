@@ -169,9 +169,14 @@ export function SceneViewer() {
             }
           }
           // Block movement keys while the guide is open.
+          // Always skip registering them — the key event itself still reaches the focused
+          // input (typing still works), but the camera loop never sees the key as held.
+          // Suppress default only when not in an input to avoid eating Space/arrows in text.
           if (chatVisibleRef.current && MOVE_KEYS.has(e.code)) {
-            e.preventDefault();
-            return;
+            const active = document.activeElement;
+            const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+            if (!isTyping) e.preventDefault();
+            return; // never set keys[...] while guide is open
           }
           keys[e.code] = true;
         };
