@@ -297,6 +297,30 @@
   box-shadow: 0 16px 36px rgba(35, 52, 85, 0.16);
 }
 
+.atlas-target-hint {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: rgba(255, 243, 194, 0.84);
+  border: 1px solid rgba(255, 214, 102, 0.95);
+  color: rgba(80, 56, 14, 0.92);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.3rem 0.62rem;
+  border-radius: 999px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 21;
+  box-shadow: 0 0 0 1px rgba(255, 214, 102, 0.32), 0 10px 24px rgba(255, 194, 82, 0.28);
+  animation: atlas-target-pulse 1s ease-in-out infinite;
+}
+
+@keyframes atlas-target-pulse {
+  0% { transform: translate(-50%, -100%) scale(1); }
+  50% { transform: translate(-50%, -100%) scale(1.03); }
+  100% { transform: translate(-50%, -100%) scale(1); }
+}
+
 /* ─── Focused element overlay label ─────────────────────────────────── */
 
 .atlas-scene-label-overlay {

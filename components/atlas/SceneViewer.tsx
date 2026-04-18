@@ -32,9 +32,9 @@ export function SceneViewer() {
   useEffect(() => { stemExperimentRef.current = stemExperiment; }, [stemExperiment]);
 
   const spzUrl =
-    world?.assets?.splats?.spz_urls?.full_res ||
     world?.assets?.splats?.spz_urls?.['500k'] ||
     world?.assets?.splats?.spz_urls?.['100k'] ||
+    world?.assets?.splats?.spz_urls?.full_res ||
     null;
 
   useEffect(() => {
@@ -81,8 +81,8 @@ export function SceneViewer() {
         );
         camera.position.set(0, 1.7, 4);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.setSize(container.clientWidth, container.clientHeight);
         container.innerHTML = '';
         container.appendChild(renderer.domElement);
@@ -99,62 +99,105 @@ export function SceneViewer() {
 
         const isStemExperimentScene = sceneGraph?.scene_type === 'science_experiment';
         let plantVisual: any = null;
-        let sunlightBeam: any = null;
-        let waterStream: any = null;
-        const oxygenParticles: any[] = [];
+        let petalsGroup: any = null;
+        let flowerCenter: any = null;
+        let fallbackPlantGroup: any = null;
+        let flowerModel: any = null;
+        let flowerKeyLight: any = null;
+        let flowerFillLight: any = null;
+        let contactShadow: any = null;
         if (isStemExperimentScene) {
+          const plantBaseY = -0.68;
           const plantGroup = new THREE.Group();
-          plantGroup.position.set(0, 0.55, -0.9);
+          plantGroup.position.set(0, plantBaseY, -0.9);
+          fallbackPlantGroup = new THREE.Group();
+          plantGroup.add(fallbackPlantGroup);
+
+          flowerKeyLight = new THREE.DirectionalLight(0xfff3cc, 1.15);
+          flowerKeyLight.position.set(1.4, 2.3, 1.1);
+          scene.add(flowerKeyLight);
+
+          flowerFillLight = new THREE.HemisphereLight(0xffffff, 0x91b08d, 0.55);
+          scene.add(flowerFillLight);
 
           const pot = new THREE.Mesh(
             new THREE.CylinderGeometry(0.24, 0.28, 0.2, 16),
-            new THREE.MeshStandardMaterial({ color: 0x7a5a43, roughness: 0.9 })
+            new THREE.MeshStandardMaterial({ color: 0x8f5f45, roughness: 0.88, metalness: 0.08 })
           );
           pot.position.y = -0.2;
-          plantGroup.add(pot);
+          fallbackPlantGroup.add(pot);
+
+          contactShadow = new THREE.Mesh(
+            new THREE.CircleGeometry(0.33, 24),
+            new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.2, depthWrite: false })
+          );
+          contactShadow.rotation.x = -Math.PI / 2;
+          contactShadow.position.y = -0.305;
+          fallbackPlantGroup.add(contactShadow);
 
           const stem = new THREE.Mesh(
             new THREE.CylinderGeometry(0.03, 0.045, 0.8, 12),
-            new THREE.MeshStandardMaterial({ color: 0x3a9d5d, roughness: 0.7 })
+            new THREE.MeshStandardMaterial({ color: 0x4a9d61, roughness: 0.72, metalness: 0.03 })
           );
           stem.position.y = 0.18;
-          plantGroup.add(stem);
+          fallbackPlantGroup.add(stem);
 
-          const crown = new THREE.Mesh(
-            new THREE.SphereGeometry(0.24, 16, 16),
-            new THREE.MeshStandardMaterial({ color: 0x55b86f, roughness: 0.65 })
+          const bud = new THREE.Mesh(
+            new THREE.SphereGeometry(0.12, 14, 14),
+            new THREE.MeshStandardMaterial({ color: 0x58b970, roughness: 0.68, metalness: 0.04 })
           );
-          crown.position.y = 0.62;
-          plantGroup.add(crown);
+          bud.position.y = 0.67;
+          fallbackPlantGroup.add(bud);
+
+          petalsGroup = new THREE.Group();
+          petalsGroup.position.y = 0.67;
+          petalsGroup.scale.setScalar(0.12);
+          for (let i = 0; i < 6; i++) {
+            const petal = new THREE.Mesh(
+              new THREE.SphereGeometry(0.085, 12, 12),
+              new THREE.MeshStandardMaterial({ color: 0xf79bc1, roughness: 0.58, metalness: 0.02 })
+            );
+            const angle = (i / 6) * Math.PI * 2;
+            petal.position.set(Math.cos(angle) * 0.1, Math.sin(angle) * 0.1, 0);
+            petalsGroup.add(petal);
+          }
+          flowerCenter = new THREE.Mesh(
+            new THREE.SphereGeometry(0.06, 10, 10),
+            new THREE.MeshStandardMaterial({ color: 0xffd664, roughness: 0.5, metalness: 0.06 })
+          );
+          petalsGroup.add(flowerCenter);
+          fallbackPlantGroup.add(petalsGroup);
+
+          // Optional: drop a realistic flower model at public/models/stem-flower.glb.
+          // If unavailable, geometry fallback above remains active.
+          try {
+            const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+            const loader = new GLTFLoader();
+            let gltf: any = null;
+            try {
+              gltf = await loader.loadAsync('/models/stem-flower.glb');
+            } catch {
+              gltf = await loader.loadAsync('/models/white_flower.glb');
+            }
+            flowerModel = gltf.scene;
+            // Manual offset tuning: simple guessed placement (requested).
+            flowerModel.position.set(0, -0.04, 0);
+            flowerModel.scale.setScalar(0.028);
+            flowerModel.traverse((obj: any) => {
+              if (obj.isMesh) {
+                obj.castShadow = false;
+                obj.receiveShadow = false;
+              }
+            });
+            // Hide fallback geometry when realistic model is available.
+            fallbackPlantGroup.visible = false;
+            plantGroup.add(flowerModel);
+          } catch {
+            // No model found; keep fallback geometry.
+          }
 
           scene.add(plantGroup);
           plantVisual = plantGroup;
-
-          sunlightBeam = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.1, 0.34, 1.8, 16),
-            new THREE.MeshBasicMaterial({ color: 0xffec92, transparent: true, opacity: 0.04, depthWrite: false })
-          );
-          sunlightBeam.position.set(-0.42, 1.55, -0.86);
-          sunlightBeam.rotation.z = 0.22;
-          scene.add(sunlightBeam);
-
-          waterStream = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.08, 0.9, 12),
-            new THREE.MeshBasicMaterial({ color: 0x79d2ff, transparent: true, opacity: 0.04, depthWrite: false })
-          );
-          waterStream.position.set(0.52, 0.34, -0.86);
-          waterStream.rotation.z = -0.45;
-          scene.add(waterStream);
-
-          for (let i = 0; i < 16; i++) {
-            const particle = new THREE.Mesh(
-              new THREE.SphereGeometry(0.03, 8, 8),
-              new THREE.MeshBasicMaterial({ color: 0xd8f6ff, transparent: true, opacity: 0.0, depthWrite: false })
-            );
-            particle.position.set(-0.15 + Math.random() * 0.3, 0.6 + Math.random() * 0.2, -0.95 + Math.random() * 0.2);
-            scene.add(particle);
-            oxygenParticles.push(particle);
-          }
         }
 
         // --- Hybrid interaction layer (Three.js hotspot anchors over Spark world)
@@ -172,13 +215,35 @@ export function SceneViewer() {
         container.appendChild(tooltip);
         cleanupFns.push(() => tooltip.remove());
 
+        const targetHint = document.createElement('div');
+        targetHint.className = 'atlas-target-hint';
+        targetHint.style.display = 'none';
+        container.appendChild(targetHint);
+        cleanupFns.push(() => targetHint.remove());
+
         const focusLabel = document.createElement('div');
         focusLabel.className = 'atlas-scene-label-overlay';
         focusLabel.style.display = 'none';
         container.appendChild(focusLabel);
         cleanupFns.push(() => focusLabel.remove());
 
-        const hotspotGeometry = new THREE.SphereGeometry(0.38, 18, 18);
+        const targetBeacon = new THREE.Mesh(
+          new THREE.SphereGeometry(0.13, 16, 16),
+          new THREE.MeshBasicMaterial({
+            color: 0xffd664,
+            transparent: true,
+            opacity: 0.0,
+            depthWrite: false,
+          })
+        );
+        targetBeacon.visible = false;
+        scene.add(targetBeacon);
+
+        const hotspotGeometry = new THREE.SphereGeometry(
+          sceneGraph?.scene_type === 'science_experiment' ? 0.52 : 0.38,
+          12,
+          12
+        );
         const hotspotMaterial = new THREE.MeshBasicMaterial({
           color: 0xff6ea9,
           transparent: true,
@@ -239,9 +304,10 @@ export function SceneViewer() {
 
         const onKeyDown = (e: KeyboardEvent) => {
           // Toggle chat guide with C (unless user is typing in an input).
+          const active = document.activeElement;
+          const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+
           if (e.code === 'KeyC') {
-            const active = document.activeElement;
-            const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
             if (!isTyping) {
               e.preventDefault();
               const next = !chatVisibleRef.current;
@@ -250,16 +316,24 @@ export function SceneViewer() {
               return;
             }
           }
-          // Block movement keys while the guide is open.
-          // Always skip registering them — the key event itself still reaches the focused
-          // input (typing still works), but the camera loop never sees the key as held.
-          // Suppress default only when not in an input to avoid eating Space/arrows in text.
-          if (chatVisibleRef.current && MOVE_KEYS.has(e.code)) {
-            const active = document.activeElement;
-            const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
-            if (!isTyping) e.preventDefault();
-            return; // never set keys[...] while guide is open
+          // STEM fallback: press E to activate current guided target.
+          if (e.code === 'KeyE' && !isTyping) {
+            const exp = stemExperimentRef.current;
+            if (exp?.isActive && exp.nextTargetId) {
+              const nextEl = sceneGraph?.elements?.find((el) => el.id === exp.nextTargetId) || null;
+              if (nextEl) {
+                e.preventDefault();
+                updateFocusUi(nextEl);
+                triggerStemInteraction(nextEl);
+                chatVisibleRef.current = true;
+                showChatSetterRef.current(true);
+                return;
+              }
+            }
           }
+          // Keep movement available even when the guide is open.
+          // Only suppress movement key registration while user is typing in an input.
+          if (MOVE_KEYS.has(e.code) && isTyping) return;
           keys[e.code] = true;
         };
         const onKeyUp = (e: KeyboardEvent) => {
@@ -295,7 +369,12 @@ export function SceneViewer() {
         document.addEventListener('mousemove', onMouseMove);
         cleanupFns.push(() => document.removeEventListener('mousemove', onMouseMove));
 
-        const onCanvasClick = () => {
+        const onCanvasClick = (e: MouseEvent) => {
+          if (container && !pointerLocked) {
+            const rect = container.getBoundingClientRect();
+            pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          }
           if (!pointerLocked) {
             const picked = pickHotspot();
             if (picked) {
@@ -327,19 +406,24 @@ export function SceneViewer() {
         const hoverColor = new THREE.Color(0xff8cc0);
         const focusedColor = new THREE.Color(0xff4f9a);
         const idleColor = new THREE.Color(0xff6ea9);
+        const targetColor = new THREE.Color(0xffd664);
 
         const updateHover = () => {
           if (pointerLocked) {
             tooltip.style.display = 'none';
             return;
           }
+          const exp = stemExperimentRef.current;
+          const nextTargetId = exp?.isActive ? exp.nextTargetId : null;
           const picked = pickHotspot();
           if (!picked) {
             tooltip.style.display = 'none';
             hotspotMeshes.forEach((m) => {
               const mat = m.material as any;
-              mat.opacity = m.uuid === focusedUuid ? 0.22 : 0.08;
-              mat.color.copy(m.uuid === focusedUuid ? focusedColor : idleColor);
+              const isFocused = m.uuid === focusedUuid;
+              const isTarget = nextTargetId && m.userData.elementId === nextTargetId;
+              mat.opacity = isTarget ? 0.3 : isFocused ? 0.22 : 0.08;
+              mat.color.copy(isTarget ? targetColor : isFocused ? focusedColor : idleColor);
             });
             return;
           }
@@ -354,8 +438,9 @@ export function SceneViewer() {
             const mat = m.material as any;
             const isPicked = m.userData.elementId === picked.id;
             const isFocused = m.uuid === focusedUuid;
-            mat.opacity = isPicked ? 0.28 : isFocused ? 0.22 : 0.08;
-            mat.color.copy(isPicked ? hoverColor : isFocused ? focusedColor : idleColor);
+            const isTarget = nextTargetId && m.userData.elementId === nextTargetId;
+            mat.opacity = isPicked ? 0.28 : isTarget ? 0.3 : isFocused ? 0.22 : 0.08;
+            mat.color.copy(isPicked ? hoverColor : isTarget ? targetColor : isFocused ? focusedColor : idleColor);
           });
         };
 
@@ -392,34 +477,64 @@ export function SceneViewer() {
             }
           }
 
-          if (isStemExperimentScene && plantVisual && sunlightBeam && waterStream) {
+          if (isStemExperimentScene && plantVisual) {
             const exp = stemExperimentRef.current;
             const growth = exp?.plantGrowth ?? 0;
-            const growthScale = 0.45 + (growth / 100) * 0.9;
+            const growthScale = 0.42 + (growth / 100) * 0.95;
             plantVisual.scale.setScalar(growthScale);
 
-            const lightOn = !!exp?.resources.light;
-            const waterOn = !!exp?.resources.water;
-            const oxygenLevel = exp?.oxygenLevel ?? 0;
-            (sunlightBeam.material as any).opacity = lightOn ? 0.32 : 0.04;
-            (waterStream.material as any).opacity = waterOn ? 0.3 : 0.04;
+            // Flower blooming progression: petals open as steps complete.
+            if (petalsGroup && !flowerModel) {
+              const bloom = Math.max(0, (growth - 35) / 65);
+              petalsGroup.scale.setScalar(0.12 + bloom * 1.08);
+              petalsGroup.rotation.z += delta * (0.12 + bloom * 0.22);
+            }
+            if (flowerCenter && !flowerModel) {
+              const centerMat = flowerCenter.material as any;
+              centerMat.color.setHex(growth >= 90 ? 0xfff07a : 0xffd664);
+            }
+            if (flowerModel) {
+              const bloom = Math.max(0, growth / 100);
+              // Smaller baseline and softer growth curve to avoid large jumps.
+              const smoothBloom = Math.pow(bloom, 1.8);
+              flowerModel.scale.setScalar(0.028 + smoothBloom * 0.008);
+              flowerModel.rotation.y += delta * (0.15 + bloom * 0.2);
+            }
+            if (contactShadow) {
+              const shadowMat = contactShadow.material as any;
+              shadowMat.opacity = 0.16 + (growth / 100) * 0.1;
+            }
+          }
 
-            const pulse = 0.85 + Math.sin(performance.now() * 0.003) * 0.1;
-            sunlightBeam.scale.y = pulse;
-            waterStream.scale.y = 0.9 + Math.cos(performance.now() * 0.004) * 0.08;
+          const exp = stemExperimentRef.current;
+          const nextTargetId = exp?.isActive ? exp.nextTargetId : null;
+          const nextTargetLabel = exp?.nextTargetLabel || 'Next Step';
+          const pulse = 1 + Math.sin(performance.now() * 0.008) * 0.12;
+          let targetMesh: any = null;
+          hotspotMeshes.forEach((m) => {
+            const isTarget = !!nextTargetId && m.userData.elementId === nextTargetId;
+            m.scale.setScalar(isTarget ? 1.15 * pulse : 1);
+            if (isTarget) targetMesh = m;
+          });
 
-            oxygenParticles.forEach((p, i) => {
-              const mat = p.material as any;
-              const active = oxygenLevel > 0;
-              mat.opacity = active ? Math.min(0.55, 0.12 + oxygenLevel / 220) : 0;
-              if (!active) return;
-              p.position.y += delta * (0.22 + i * 0.01 + oxygenLevel / 380);
-              if (p.position.y > 1.45) {
-                p.position.y = 0.62 + Math.random() * 0.18;
-                p.position.x = -0.15 + Math.random() * 0.3;
-                p.position.z = -0.95 + Math.random() * 0.2;
-              }
-            });
+          if (targetMesh) {
+            const projected = targetMesh.position.clone().project(camera);
+            const x = (projected.x * 0.5 + 0.5) * container.clientWidth;
+            const y = (-projected.y * 0.5 + 0.5) * container.clientHeight;
+            targetHint.textContent = `Activate: ${nextTargetLabel}`;
+            targetHint.style.left = `${x}px`;
+            targetHint.style.top = `${Math.max(24, y - 26)}px`;
+            targetHint.style.display = 'block';
+
+            targetBeacon.visible = true;
+            targetBeacon.position.copy(targetMesh.position);
+            targetBeacon.position.y += 0.42;
+            const beaconMat = targetBeacon.material as any;
+            beaconMat.opacity = 0.3 + Math.sin(performance.now() * 0.01) * 0.12;
+            targetBeacon.scale.setScalar(0.9 + Math.sin(performance.now() * 0.01) * 0.15);
+          } else {
+            targetHint.style.display = 'none';
+            targetBeacon.visible = false;
           }
 
           updateHover();
@@ -433,14 +548,13 @@ export function SceneViewer() {
         cleanupFns.push(() => {
           hotspotGeometry.dispose();
           hotspotMeshes.forEach((m) => m.material?.dispose?.());
-          oxygenParticles.forEach((p) => {
-            p.geometry?.dispose?.();
-            p.material?.dispose?.();
-          });
-          sunlightBeam?.geometry?.dispose?.();
-          sunlightBeam?.material?.dispose?.();
-          waterStream?.geometry?.dispose?.();
-          waterStream?.material?.dispose?.();
+          targetBeacon.geometry?.dispose?.();
+          targetBeacon.material?.dispose?.();
+          flowerKeyLight?.dispose?.();
+          scene.remove(flowerKeyLight);
+          scene.remove(flowerFillLight);
+          contactShadow?.geometry?.dispose?.();
+          contactShadow?.material?.dispose?.();
           renderer.dispose();
           spark.dispose?.();
           container.innerHTML = '';
@@ -548,8 +662,16 @@ export function SceneViewer() {
       )}
 
       <div className="atlas-controls-hint">
-        Click to lock pointer · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move ·
-        Press <kbd>C</kbd> or click a hotspot to open guide.
+        {stemExperiment?.isActive ? (
+          <>
+            Follow the glowing marker and click the highlighted hotspot to activate each step · Press <kbd>C</kbd> to open guide
+          </>
+        ) : (
+          <>
+            Click to lock pointer · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move ·
+            Press <kbd>C</kbd> or click a hotspot to open guide.
+          </>
+        )}
       </div>
     </div>
   );

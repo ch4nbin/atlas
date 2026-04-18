@@ -69,6 +69,20 @@ function hasRenderableSplat(world: MarbleWorld | null): boolean {
   return !!(spz?.['500k'] || spz?.['100k'] || spz?.full_res);
 }
 
+function sanitizeErrorMessage(input: string): string {
+  let msg = input || 'Unknown error';
+  // Redact common env assignment leaks.
+  msg = msg.replace(
+    /(WORLDLABS(?:_STEM)?_API_KEY\s*=\s*)([^\s]+)/gi,
+    '$1[REDACTED]'
+  );
+  msg = msg.replace(/(GEMINI_API_KEY\s*=\s*)([^\s]+)/gi, '$1[REDACTED]');
+  msg = msg.replace(/(OPENAI_API_KEY\s*=\s*)([^\s]+)/gi, '$1[REDACTED]');
+  // Redact long token-like strings.
+  msg = msg.replace(/[A-Za-z0-9_\-]{24,}/g, '[REDACTED]');
+  return msg;
+}
+
 function welcomeMessage(sceneGraph: SceneGraph, assumptions: string[]): ChatMessage {
   return {
     id: makeId(),
@@ -188,7 +202,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
         await get().loadScene(label);
         return;
       }
-      set({ error: msg });
+      set({ error: sanitizeErrorMessage(msg) });
     } finally {
       if (!usedFallback) {
         set({ isLoading: false, loadingStep: '' });
@@ -287,7 +301,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       set({ world, loadingStep: 'World ready.' });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      set({ error: msg });
+      set({ error: sanitizeErrorMessage(msg) });
     } finally {
       set({ isLoading: false, loadingStep: '' });
     }
@@ -319,8 +333,8 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       if (element.id === 'water_channel') resources.water = true;
       if (element.id === 'stomata_gate') resources.co2 = true;
 
-      const growthByStep = [20, 45, 70, 90, 100];
-      const oxygenByStep = [0, 5, 20, 65, 100];
+      const growthByStep = [4, 9, 15, 22, 30];
+      const oxygenByStep = [0, 2, 5, 9, 14];
       const plantGrowth = growthByStep[Math.min(nextStep - 1, growthByStep.length - 1)];
       const oxygenLevel = oxygenByStep[Math.min(nextStep - 1, oxygenByStep.length - 1)];
       const nextTarget = STEM_STEP_ORDER[nextStep] || null;
