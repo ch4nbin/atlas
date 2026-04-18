@@ -328,6 +328,35 @@
   opacity: 0.9;
 }
 
+.atlas-topbar-home {
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(46, 63, 101, 0.65);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.atlas-topbar-home:hover {
+  color: rgba(46, 63, 101, 0.9);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.atlas-topbar-help {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 .atlas-topbar-input {
   flex: 1;
   min-width: 0;
@@ -386,6 +415,74 @@
 .atlas-topbar-btn:disabled {
   opacity: 0.42;
   cursor: not-allowed;
+}
+
+/* ─── Help Panel ─────────────────────────────────────────────────────── */
+
+.atlas-help-panel {
+  position: absolute;
+  top: 4.6rem;
+  right: 1rem;
+  z-index: 35;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  padding: 0.85rem 1rem;
+  backdrop-filter: blur(22px);
+  box-shadow: 0 16px 40px rgba(35, 52, 85, 0.14);
+  min-width: 220px;
+  animation: atlas-slide-up 0.18s ease;
+}
+
+.atlas-help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+
+.atlas-help-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(44, 61, 98, 0.72);
+}
+
+.atlas-help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.48rem;
+  font-size: 0.78rem;
+  color: rgba(36, 50, 80, 0.82);
+}
+
+.atlas-help-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.atlas-help-list kbd {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(200, 210, 230, 0.7);
+  border-radius: 5px;
+  padding: 0.06rem 0.38rem;
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: rgba(35, 52, 85, 0.88);
+  flex-shrink: 0;
+}
+
+.atlas-help-dot {
+  width: 7px;
+  height: 7px;
+  background: #e86aaa;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ─── Hero Overlay (initial state) ──────────────────────────────────── */
@@ -609,6 +706,23 @@
   margin-top: 0.62rem;
   letter-spacing: 0.03em;
   text-align: center;
+}
+
+.atlas-overlay-home {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.5rem;
+  z-index: 35;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(46, 63, 101, 0.55);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.atlas-overlay-home:hover {
+  color: rgba(46, 63, 101, 0.9);
 }
 
 .atlas-error {
