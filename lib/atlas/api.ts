@@ -8,7 +8,6 @@ type WorldLabsAccount = 'default' | 'stem';
 // a successful health check — which runs in the background on page load.
 let backendStatus: 'offline' | 'online' = 'offline';
 
-<<<<<<< HEAD
 async function post<T>(path: string, body: unknown, timeoutMs = 1500): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
