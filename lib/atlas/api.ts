@@ -1,4 +1,11 @@
-import type { PromptInterpretation, SceneGraph, SceneElement, MarbleOperation, MarbleWorld } from './types';
+import type {
+  PromptInterpretation,
+  SceneGraph,
+  SceneElement,
+  MarbleOperation,
+  MarbleWorld,
+  StemExperimentState,
+} from './types';
 import { getMockInterpretation, getMockScene, getMockChatResponse } from './mockData';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
@@ -58,7 +65,8 @@ export async function generateScene(
 export async function sendChat(
   sceneGraph: SceneGraph | null,
   focusedElement: SceneElement | null,
-  question: string
+  question: string,
+  experimentState: StemExperimentState | null = null
 ): Promise<string> {
   // Always attempt chat even if backendStatus is 'offline' — a prior scene/interpret
   // failure shouldn't permanently suppress chat. Reset so post() will try.
@@ -68,6 +76,7 @@ export async function sendChat(
       sceneGraph,
       focusedElement,
       question,
+      experimentState,
     }, 15000);
     return response;
   } catch {

@@ -41,6 +41,24 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export interface StemExperimentState {
+  isActive: boolean;
+  currentStep: number;
+  totalSteps: number;
+  nextTargetId: string | null;
+  nextTargetLabel: string | null;
+  completedStepIds: string[];
+  resources: {
+    light: boolean;
+    water: boolean;
+    co2: boolean;
+  };
+  plantGrowth: number;
+  oxygenLevel: number;
+  lastAction: string | null;
+  tip: string;
+}
+
 export interface MarbleWorld {
   id: string;
   world_id?: string;

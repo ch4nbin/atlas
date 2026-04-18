@@ -198,6 +198,49 @@
   color: rgba(35, 52, 85, 0.85);
 }
 
+.atlas-stem-hud {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 18;
+  width: min(320px, calc(100vw - 2rem));
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 14px;
+  padding: 0.65rem 0.75rem;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 30px rgba(35, 52, 85, 0.12);
+}
+
+.atlas-stem-hud-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(42, 59, 97, 0.78);
+}
+
+.atlas-stem-hud-step {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: rgba(35, 52, 85, 0.88);
+}
+
+.atlas-stem-hud-tip {
+  margin-top: 0.35rem;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: rgba(36, 50, 80, 0.82);
+}
+
+.atlas-stem-meters {
+  margin-top: 0.45rem;
+  display: flex;
+  gap: 0.7rem;
+  font-size: 0.72rem;
+  color: rgba(42, 59, 97, 0.84);
+}
+
 /* ─── Crosshair ──────────────────────────────────────────────────────── */
 
 .atlas-crosshair {

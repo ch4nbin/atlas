@@ -1,9 +1,23 @@
 import { create } from 'zustand';
-import type { SceneGraph, SceneElement, ChatMessage, PromptInterpretation, MarbleWorld } from '@/lib/atlas/types';
+import type {
+  SceneGraph,
+  SceneElement,
+  ChatMessage,
+  PromptInterpretation,
+  MarbleWorld,
+  StemExperimentState,
+} from '@/lib/atlas/types';
 import { generateWorld, getWorld, getWorldOperation, sendChat } from '@/lib/atlas/api';
 import { getMockScene, getMockChatResponse } from '@/lib/atlas/mockData';
 
 type WorldLabsAccount = 'default' | 'stem';
+const STEM_STEP_ORDER = [
+  { id: 'sunlight_lamp', label: 'Sunlight Simulation Lamp' },
+  { id: 'water_channel', label: 'Water Transport Channel' },
+  { id: 'stomata_gate', label: 'Stomata CO2 Intake Gate' },
+  { id: 'chloroplast_core', label: 'Chloroplast Reactor' },
+  { id: 'glucose_meter', label: 'Glucose Output Meter' },
+] as const;
 
 interface SceneState {
   prompt: string;
@@ -14,6 +28,7 @@ interface SceneState {
   world: MarbleWorld | null;
   worldOperationId: string | null;
   worldLabsAccount: WorldLabsAccount;
+  stemExperiment: StemExperimentState | null;
   focusedElement: SceneElement | null;
   chatHistory: ChatMessage[];
   isChatLoading: boolean;
@@ -25,6 +40,7 @@ interface SceneState {
   loadWorldById: (worldId: string, label?: string, options?: { account?: WorldLabsAccount }) => Promise<void>;
   refreshCurrentWorld: () => Promise<void>;
   loadDemoScene: (sceneKey: string) => void;
+  triggerStemInteraction: (element: SceneElement) => void;
   setFocusedElement: (el: SceneElement | null) => void;
   sendChatMessage: (msg: string) => Promise<void>;
   setBackendOnline: (online: boolean) => void;
@@ -62,6 +78,38 @@ function welcomeMessage(sceneGraph: SceneGraph, assumptions: string[]): ChatMess
   };
 }
 
+function isStemScene(sceneGraph: SceneGraph | null): boolean {
+  if (!sceneGraph) return false;
+  if (sceneGraph.scene_type === 'science_experiment') return true;
+  const p = `${sceneGraph.setting.location} ${sceneGraph.setting.time_period}`.toLowerCase();
+  return p.includes('plant cell') || p.includes('photosynthesis');
+}
+
+function stemTipForStep(stepIndex: number): string {
+  if (stepIndex === 0) return 'Start by activating the sunlight source.';
+  if (stepIndex === 1) return 'Great. Now add water transport to the plant.';
+  if (stepIndex === 2) return 'Next, open stomata to intake CO2.';
+  if (stepIndex === 3) return 'Now trigger the chloroplast reaction center.';
+  if (stepIndex === 4) return 'Finally, inspect glucose output to complete the cycle.';
+  return 'Cycle complete. Ask the guide why each step mattered.';
+}
+
+function makeStemExperimentState(): StemExperimentState {
+  return {
+    isActive: true,
+    currentStep: 0,
+    totalSteps: STEM_STEP_ORDER.length,
+    nextTargetId: STEM_STEP_ORDER[0].id,
+    nextTargetLabel: STEM_STEP_ORDER[0].label,
+    completedStepIds: [],
+    resources: { light: false, water: false, co2: false },
+    plantGrowth: 0,
+    oxygenLevel: 0,
+    lastAction: null,
+    tip: stemTipForStep(0),
+  };
+}
+
 export const useSceneStore = create<SceneState>((set, get) => ({
   prompt: '',
   isLoading: false,
@@ -71,6 +119,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   world: null,
   worldOperationId: null,
   worldLabsAccount: 'default',
+  stemExperiment: null,
   focusedElement: null,
   chatHistory: [],
   isChatLoading: false,
@@ -129,6 +178,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       set({
         world,
         sceneGraph,
+        stemExperiment: isStemScene(sceneGraph) ? makeStemExperimentState() : null,
         chatHistory: [welcomeMessage(sceneGraph, ['Loaded from World Labs world ID'])],
       });
     } catch (err: unknown) {
@@ -157,6 +207,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       chatHistory: [welcomeMessage(sceneGraph, [`Using World Labs generation for: ${prompt}`])],
       prompt,
       sceneGraph,
+      stemExperiment: isStemScene(sceneGraph) ? makeStemExperimentState() : null,
       world: null,
       worldOperationId: null,
       worldLabsAccount: account,
@@ -242,15 +293,78 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     }
   },
 
+  triggerStemInteraction: (element: SceneElement) => {
+    set((state) => {
+      const exp = state.stemExperiment;
+      if (!exp || !exp.isActive) return state;
+
+      const expected = STEM_STEP_ORDER[exp.currentStep];
+      const now = Date.now();
+      if (!expected) return state;
+
+      if (element.id !== expected.id) {
+        const guidance: ChatMessage = {
+          id: makeId(),
+          role: 'assistant',
+          content: `Try this next: ${expected.label}. ${exp.tip}`,
+          timestamp: now,
+        };
+        return { ...state, chatHistory: [...state.chatHistory, guidance] };
+      }
+
+      const nextStep = exp.currentStep + 1;
+      const completedStepIds = [...exp.completedStepIds, element.id];
+      const resources = { ...exp.resources };
+      if (element.id === 'sunlight_lamp') resources.light = true;
+      if (element.id === 'water_channel') resources.water = true;
+      if (element.id === 'stomata_gate') resources.co2 = true;
+
+      const growthByStep = [20, 45, 70, 90, 100];
+      const oxygenByStep = [0, 5, 20, 65, 100];
+      const plantGrowth = growthByStep[Math.min(nextStep - 1, growthByStep.length - 1)];
+      const oxygenLevel = oxygenByStep[Math.min(nextStep - 1, oxygenByStep.length - 1)];
+      const nextTarget = STEM_STEP_ORDER[nextStep] || null;
+      const tip = nextTarget ? stemTipForStep(nextStep) : 'Cycle complete. Ask the guide to explain the result.';
+
+      const updated: StemExperimentState = {
+        ...exp,
+        currentStep: Math.min(nextStep, exp.totalSteps),
+        nextTargetId: nextTarget?.id || null,
+        nextTargetLabel: nextTarget?.label || null,
+        completedStepIds,
+        resources,
+        plantGrowth,
+        oxygenLevel,
+        lastAction: element.id,
+        tip,
+      };
+
+      const progressMsg: ChatMessage = {
+        id: makeId(),
+        role: 'assistant',
+        content: nextTarget
+          ? `Nice. ${element.name} activated. Plant growth is now ${plantGrowth}%. ${tip}`
+          : `Excellent. You completed the photosynthesis cycle. Plant growth is ${plantGrowth}% and oxygen release is ${oxygenLevel}%.`,
+        timestamp: now,
+      };
+
+      return {
+        ...state,
+        stemExperiment: updated,
+        chatHistory: [...state.chatHistory, progressMsg],
+      };
+    });
+  },
+
   setFocusedElement: (el) => set({ focusedElement: el }),
 
   sendChatMessage: async (msg: string) => {
-    const { sceneGraph, focusedElement } = get();
+    const { sceneGraph, focusedElement, stemExperiment } = get();
     const userMsg: ChatMessage = { id: makeId(), role: 'user', content: msg, timestamp: Date.now() };
     set((s) => ({ chatHistory: [...s.chatHistory, userMsg], isChatLoading: true }));
 
     try {
-      const response = await sendChat(sceneGraph, focusedElement, msg);
+      const response = await sendChat(sceneGraph, focusedElement, msg, stemExperiment);
       set((s) => ({
         chatHistory: [
           ...s.chatHistory,
@@ -280,6 +394,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       world: null,
       worldOperationId: null,
       worldLabsAccount: 'default',
+      stemExperiment: null,
       focusedElement: null,
       chatHistory: [],
       isChatLoading: false,

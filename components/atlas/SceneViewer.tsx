@@ -7,7 +7,17 @@ import type { SceneElement } from '@/lib/atlas/types';
 import { ChatPanel } from './ChatPanel';
 
 export function SceneViewer() {
-  const { world, sceneGraph, isLoading, loadingStep, error, setFocusedElement, refreshCurrentWorld } = useSceneStore();
+  const {
+    world,
+    sceneGraph,
+    isLoading,
+    loadingStep,
+    error,
+    setFocusedElement,
+    refreshCurrentWorld,
+    stemExperiment,
+    triggerStemInteraction,
+  } = useSceneStore();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [sparkError, setSparkError] = useState<string | null>(null);
   const [useIframeFallback, setUseIframeFallback] = useState(false);
@@ -18,6 +28,8 @@ export function SceneViewer() {
   const showChatSetterRef = useRef(setIsChatVisible);
   showChatSetterRef.current = setIsChatVisible;
   useEffect(() => { chatVisibleRef.current = isChatVisible; }, [isChatVisible]);
+  const stemExperimentRef = useRef(stemExperiment);
+  useEffect(() => { stemExperimentRef.current = stemExperiment; }, [stemExperiment]);
 
   const spzUrl =
     world?.assets?.splats?.spz_urls?.full_res ||
@@ -84,6 +96,66 @@ export function SceneViewer() {
         splat.rotation.x = Math.PI;
         splat.updateMatrixWorld(true);
         scene.add(splat);
+
+        const isStemExperimentScene = sceneGraph?.scene_type === 'science_experiment';
+        let plantVisual: any = null;
+        let sunlightBeam: any = null;
+        let waterStream: any = null;
+        const oxygenParticles: any[] = [];
+        if (isStemExperimentScene) {
+          const plantGroup = new THREE.Group();
+          plantGroup.position.set(0, 0.55, -0.9);
+
+          const pot = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.24, 0.28, 0.2, 16),
+            new THREE.MeshStandardMaterial({ color: 0x7a5a43, roughness: 0.9 })
+          );
+          pot.position.y = -0.2;
+          plantGroup.add(pot);
+
+          const stem = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.03, 0.045, 0.8, 12),
+            new THREE.MeshStandardMaterial({ color: 0x3a9d5d, roughness: 0.7 })
+          );
+          stem.position.y = 0.18;
+          plantGroup.add(stem);
+
+          const crown = new THREE.Mesh(
+            new THREE.SphereGeometry(0.24, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0x55b86f, roughness: 0.65 })
+          );
+          crown.position.y = 0.62;
+          plantGroup.add(crown);
+
+          scene.add(plantGroup);
+          plantVisual = plantGroup;
+
+          sunlightBeam = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.1, 0.34, 1.8, 16),
+            new THREE.MeshBasicMaterial({ color: 0xffec92, transparent: true, opacity: 0.04, depthWrite: false })
+          );
+          sunlightBeam.position.set(-0.42, 1.55, -0.86);
+          sunlightBeam.rotation.z = 0.22;
+          scene.add(sunlightBeam);
+
+          waterStream = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.08, 0.9, 12),
+            new THREE.MeshBasicMaterial({ color: 0x79d2ff, transparent: true, opacity: 0.04, depthWrite: false })
+          );
+          waterStream.position.set(0.52, 0.34, -0.86);
+          waterStream.rotation.z = -0.45;
+          scene.add(waterStream);
+
+          for (let i = 0; i < 16; i++) {
+            const particle = new THREE.Mesh(
+              new THREE.SphereGeometry(0.03, 8, 8),
+              new THREE.MeshBasicMaterial({ color: 0xd8f6ff, transparent: true, opacity: 0.0, depthWrite: false })
+            );
+            particle.position.set(-0.15 + Math.random() * 0.3, 0.6 + Math.random() * 0.2, -0.95 + Math.random() * 0.2);
+            scene.add(particle);
+            oxygenParticles.push(particle);
+          }
+        }
 
         // --- Hybrid interaction layer (Three.js hotspot anchors over Spark world)
         const raycaster = new THREE.Raycaster();
@@ -228,6 +300,7 @@ export function SceneViewer() {
             const picked = pickHotspot();
             if (picked) {
               updateFocusUi(picked);
+              triggerStemInteraction(picked);
               chatVisibleRef.current = true;
               showChatSetterRef.current(true);
               return;
@@ -240,6 +313,7 @@ export function SceneViewer() {
           const picked = pickHotspot();
           if (picked) {
             updateFocusUi(picked);
+            triggerStemInteraction(picked);
             chatVisibleRef.current = true;
             showChatSetterRef.current(true);
           }
@@ -318,6 +392,36 @@ export function SceneViewer() {
             }
           }
 
+          if (isStemExperimentScene && plantVisual && sunlightBeam && waterStream) {
+            const exp = stemExperimentRef.current;
+            const growth = exp?.plantGrowth ?? 0;
+            const growthScale = 0.45 + (growth / 100) * 0.9;
+            plantVisual.scale.setScalar(growthScale);
+
+            const lightOn = !!exp?.resources.light;
+            const waterOn = !!exp?.resources.water;
+            const oxygenLevel = exp?.oxygenLevel ?? 0;
+            (sunlightBeam.material as any).opacity = lightOn ? 0.32 : 0.04;
+            (waterStream.material as any).opacity = waterOn ? 0.3 : 0.04;
+
+            const pulse = 0.85 + Math.sin(performance.now() * 0.003) * 0.1;
+            sunlightBeam.scale.y = pulse;
+            waterStream.scale.y = 0.9 + Math.cos(performance.now() * 0.004) * 0.08;
+
+            oxygenParticles.forEach((p, i) => {
+              const mat = p.material as any;
+              const active = oxygenLevel > 0;
+              mat.opacity = active ? Math.min(0.55, 0.12 + oxygenLevel / 220) : 0;
+              if (!active) return;
+              p.position.y += delta * (0.22 + i * 0.01 + oxygenLevel / 380);
+              if (p.position.y > 1.45) {
+                p.position.y = 0.62 + Math.random() * 0.18;
+                p.position.x = -0.15 + Math.random() * 0.3;
+                p.position.z = -0.95 + Math.random() * 0.2;
+              }
+            });
+          }
+
           updateHover();
 
           renderer.render(scene, camera);
@@ -329,6 +433,14 @@ export function SceneViewer() {
         cleanupFns.push(() => {
           hotspotGeometry.dispose();
           hotspotMeshes.forEach((m) => m.material?.dispose?.());
+          oxygenParticles.forEach((p) => {
+            p.geometry?.dispose?.();
+            p.material?.dispose?.();
+          });
+          sunlightBeam?.geometry?.dispose?.();
+          sunlightBeam?.material?.dispose?.();
+          waterStream?.geometry?.dispose?.();
+          waterStream?.material?.dispose?.();
           renderer.dispose();
           spark.dispose?.();
           container.innerHTML = '';
@@ -419,6 +531,20 @@ export function SceneViewer() {
 
       {sceneGraph && isChatVisible && (
         <ChatPanel onClose={() => { chatVisibleRef.current = false; setIsChatVisible(false); }} />
+      )}
+
+      {stemExperiment?.isActive && (
+        <div className="atlas-stem-hud">
+          <div className="atlas-stem-hud-title">Photosynthesis Lab</div>
+          <div className="atlas-stem-hud-step">
+            Step {Math.min(stemExperiment.currentStep + 1, stemExperiment.totalSteps)} / {stemExperiment.totalSteps}
+          </div>
+          <div className="atlas-stem-hud-tip">{stemExperiment.tip}</div>
+          <div className="atlas-stem-meters">
+            <div>Growth {stemExperiment.plantGrowth}%</div>
+            <div>O₂ {stemExperiment.oxygenLevel}%</div>
+          </div>
+        </div>
       )}
 
       <div className="atlas-controls-hint">

@@ -90,10 +90,10 @@ Rules:
   return buildSceneFromInterpretation(interpretation);
 }
 
-async function generateChatResponse(sceneGraph, focusedElement, question) {
+async function generateChatResponse(sceneGraph, focusedElement, question, experimentState = null) {
   const genAI = getGemini();
 
-  const sceneContext = buildSceneContext(sceneGraph, focusedElement);
+  const sceneContext = buildSceneContext(sceneGraph, focusedElement, experimentState);
 
   if (genAI) {
     try {
@@ -109,6 +109,7 @@ Guidelines:
 - Draw on domain-accurate detail: historical details for humanities scenes and scientifically accurate details for STEM scenes
 - Always ground your answer in the scene elements provided; never invent people or objects not listed
 - When a focused element is provided, make it the center of your answer
+- If experiment state is provided, guide the learner based on current step and what to do next
 - If the user asks something outside this scene, briefly redirect to the scene in one sentence
 - Speak in present tense as if the user is standing inside the scene right now
 - Be specific and vivid — no filler or generic statements
@@ -122,10 +123,10 @@ Guidelines:
     }
   }
 
-  return mockChatResponse(sceneGraph, focusedElement, question);
+  return mockChatResponse(sceneGraph, focusedElement, question, experimentState);
 }
 
-function buildSceneContext(sceneGraph, focusedElement) {
+function buildSceneContext(sceneGraph, focusedElement, experimentState) {
   if (!sceneGraph) return 'No scene loaded.';
   const { setting, elements } = sceneGraph;
   const lines = [
@@ -136,6 +137,17 @@ function buildSceneContext(sceneGraph, focusedElement) {
   if (focusedElement) {
     lines.push(
       `User is currently looking at: ${focusedElement.name} — ${focusedElement.description}`
+    );
+  }
+  if (experimentState && experimentState.isActive) {
+    lines.push(
+      `Experiment progress: step ${experimentState.currentStep + 1}/${experimentState.totalSteps}; next target: ${experimentState.nextTargetLabel || 'none'}`
+    );
+    lines.push(
+      `Resources -> light:${experimentState.resources.light}, water:${experimentState.resources.water}, co2:${experimentState.resources.co2}`
+    );
+    lines.push(
+      `Plant growth:${experimentState.plantGrowth}%, oxygen:${experimentState.oxygenLevel}%, tip:${experimentState.tip}`
     );
   }
   return lines.join('\n');
@@ -179,11 +191,20 @@ function mockInterpret(prompt) {
   };
 }
 
-function mockChatResponse(sceneGraph, focusedElement, question) {
+function mockChatResponse(sceneGraph, focusedElement, question, experimentState = null) {
   if (!sceneGraph) return "No scene is loaded yet. Please enter a prompt to explore a scene.";
 
   const { setting } = sceneGraph;
   const q = question.toLowerCase();
+
+  if (experimentState && experimentState.isActive) {
+    if (q.includes('next') || q.includes('what should') || q.includes('what now')) {
+      return experimentState.tip;
+    }
+    if (q.includes('progress') || q.includes('status')) {
+      return `You are on step ${experimentState.currentStep + 1} of ${experimentState.totalSteps}. Plant growth is ${experimentState.plantGrowth}% and oxygen output is ${experimentState.oxygenLevel}%.`;
+    }
+  }
 
   if (focusedElement) {
     if (q.includes('what') || q.includes('tell') || q.includes('describe')) {
