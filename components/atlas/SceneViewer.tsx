@@ -153,7 +153,7 @@ export function SceneViewer() {
         window.addEventListener('resize', onResize);
         cleanupFns.push(() => window.removeEventListener('resize', onResize));
 
-        const MOVE_KEYS = new Set(['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
+        const MOVE_KEYS = new Set(['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight']);
 
         const onKeyDown = (e: KeyboardEvent) => {
           // Toggle chat guide with C (unless user is typing in an input).
@@ -169,7 +169,10 @@ export function SceneViewer() {
             }
           }
           // Block movement keys while the guide is open.
-          if (chatVisibleRef.current && MOVE_KEYS.has(e.code)) return;
+          if (chatVisibleRef.current && MOVE_KEYS.has(e.code)) {
+            e.preventDefault();
+            return;
+          }
           keys[e.code] = true;
         };
         const onKeyUp = (e: KeyboardEvent) => {
