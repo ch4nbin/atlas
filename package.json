@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "rm -rf .next && next dev",
     "dev:backend": "cd backend && npm run dev",
     "dev:all": "concurrently -n frontend,backend -c cyan,yellow \"npm run dev\" \"npm run dev:backend\"",
     "backend:install": "cd backend && npm install",
