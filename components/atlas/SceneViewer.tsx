@@ -62,6 +62,10 @@ export function SceneViewer() {
         scene.add(spark);
 
         const splat = new SplatMesh({ url: spzUrl });
+        // World Labs SPZ assets can come in a coordinate frame that appears upside-down
+        // relative to our first-person camera setup. Apply a one-time upright correction.
+        splat.rotation.x = Math.PI;
+        splat.updateMatrixWorld(true);
         scene.add(splat);
 
         // --- Hybrid interaction layer (Three.js hotspot anchors over Spark world)
