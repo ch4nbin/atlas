@@ -1,6 +1,70 @@
 'use strict';
 
 const MOCK_SCENES = {
+  photosynthesis_lab: {
+    setting: {
+      location: "Interactive Plant Cell Lab",
+      time_period: "Modern classroom science demo",
+      time_of_day: "midday",
+    },
+    scene_type: "science_experiment",
+    elements: [
+      {
+        id: "sunlight_lamp",
+        type: "object",
+        name: "Sunlight Simulation Lamp",
+        description:
+          "A lab light array that delivers photons to power the light-dependent stage of photosynthesis.",
+        importance: "high",
+        position_hint: "upper left foreground, angled toward chloroplast",
+      },
+      {
+        id: "leaf_section",
+        type: "environment",
+        name: "Leaf Cross-Section",
+        description:
+          "A magnified 3D leaf model showing epidermis, mesophyll, and vascular tissues where photosynthesis occurs.",
+        importance: "high",
+        position_hint: "center background, full width",
+      },
+      {
+        id: "stomata_gate",
+        type: "action",
+        name: "Stomata Gate",
+        description:
+          "Guard cells controlling pore openings for carbon dioxide intake and water vapor release.",
+        importance: "high",
+        position_hint: "left mid-ground on leaf surface",
+      },
+      {
+        id: "chloroplast_model",
+        type: "object",
+        name: "Chloroplast Reactor",
+        description:
+          "An enlarged chloroplast showing thylakoids for light reactions and stroma for the Calvin cycle.",
+        importance: "high",
+        position_hint: "center foreground, floating cutaway model",
+      },
+      {
+        id: "water_channel",
+        type: "action",
+        name: "Water Transport Channel",
+        description:
+          "A simplified xylem flow path that delivers water molecules to photosynthetic tissue.",
+        importance: "medium",
+        position_hint: "right mid-ground, vein pathway",
+      },
+      {
+        id: "oxygen_stream",
+        type: "action",
+        name: "Oxygen Release Stream",
+        description:
+          "Visible oxygen bubbles representing O2 released after photolysis of water.",
+        importance: "medium",
+        position_hint: "upper right, rising from reaction chamber",
+      },
+    ],
+  },
   boston_tea_party: {
     setting: {
       location: "Griffin's Wharf, Boston Harbor, Massachusetts Bay Colony",
@@ -133,6 +197,14 @@ const MOCK_SCENES = {
 
 function findMatchingScene(prompt) {
   const p = prompt.toLowerCase();
+  if (
+    p.includes("photosynthesis") ||
+    p.includes("chloroplast") ||
+    p.includes("stomata") ||
+    p.includes("plant cell")
+  ) {
+    return MOCK_SCENES.photosynthesis_lab;
+  }
   if (
     p.includes("boston") ||
     p.includes("tea party") ||

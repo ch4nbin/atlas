@@ -7,11 +7,12 @@ import type { SceneElement } from '@/lib/atlas/types';
 import { ChatPanel } from './ChatPanel';
 
 export function SceneViewer() {
-  const { world, sceneGraph, isLoading, loadingStep, error, setFocusedElement } = useSceneStore();
+  const { world, sceneGraph, isLoading, loadingStep, error, setFocusedElement, refreshCurrentWorld } = useSceneStore();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [sparkError, setSparkError] = useState<string | null>(null);
   const [useIframeFallback, setUseIframeFallback] = useState(false);
   const [isChatVisible, setIsChatVisible] = useState(false);
+  const [assetRefreshCount, setAssetRefreshCount] = useState(0);
   // Ref bridge: lets Three.js loop/handlers read/write React state without stale closures.
   const chatVisibleRef = useRef(false);
   const showChatSetterRef = useRef(setIsChatVisible);
@@ -19,10 +20,19 @@ export function SceneViewer() {
   useEffect(() => { chatVisibleRef.current = isChatVisible; }, [isChatVisible]);
 
   const spzUrl =
+    world?.assets?.splats?.spz_urls?.full_res ||
     world?.assets?.splats?.spz_urls?.['500k'] ||
     world?.assets?.splats?.spz_urls?.['100k'] ||
-    world?.assets?.splats?.spz_urls?.full_res ||
     null;
+
+  useEffect(() => {
+    if (!world || spzUrl) return;
+    const timer = window.setInterval(() => {
+      void refreshCurrentWorld();
+      setAssetRefreshCount((v) => v + 1);
+    }, 7000);
+    return () => window.clearInterval(timer);
+  }, [world, spzUrl, refreshCurrentWorld]);
 
   useEffect(() => {
     if (!world || !spzUrl || !containerRef.current) return;
@@ -59,7 +69,7 @@ export function SceneViewer() {
         );
         camera.position.set(0, 1.7, 4);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(container.clientWidth, container.clientHeight);
         container.innerHTML = '';
@@ -363,11 +373,21 @@ export function SceneViewer() {
         </>
       ) : (
         <div className="atlas-world-fallback-panel">
-          <h3>Spark Renderer Could Not Start</h3>
+          <h3>{spzUrl ? 'Spark Renderer Could Not Start' : 'World Assets Still Processing'}</h3>
           <p>
-            The SPZ world could not be rendered in this browser session. Use the button below to
-            open the world directly in Marble while we keep debugging Spark integration.
+            {spzUrl
+              ? 'The SPZ world could not be rendered in this browser session. Use the button below to open the world directly in Marble while we keep debugging Spark integration.'
+              : 'This world is available in Marble, but SPZ assets are not ready for the in-app renderer yet. Open it in Marble now, or retry once assets finish processing.'}
           </p>
+          {!spzUrl && (
+            <button
+              className="atlas-world-open atlas-world-open-lg"
+              onClick={() => void refreshCurrentWorld()}
+              type="button"
+            >
+              Retry Asset Check ({assetRefreshCount})
+            </button>
+          )}
           <a
             className="atlas-world-open atlas-world-open-lg"
             href={world.world_marble_url}

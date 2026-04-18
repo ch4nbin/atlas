@@ -4,12 +4,23 @@ const express = require('express');
 const router = express.Router();
 
 const WORLDLABS_BASE_URL = 'https://api.worldlabs.ai/marble/v1';
-const DEV_WORLDLABS_API_KEY = '9JODQtbzCxtAXbmw8TK84eRgCYjrXG9q';
 
-async function worldLabsRequest(path, init = {}) {
-  const apiKey = process.env.WORLDLABS_API_KEY || DEV_WORLDLABS_API_KEY;
+function getWorldLabsApiKey(account = 'default') {
+  const normalized = String(account || 'default').toLowerCase();
+  if (normalized === 'stem') {
+    return process.env.WORLDLABS_STEM_API_KEY || null;
+  }
+  return process.env.WORLDLABS_API_KEY || null;
+}
+
+async function worldLabsRequest(path, init = {}, account = 'default') {
+  const apiKey = getWorldLabsApiKey(account);
   if (!apiKey) {
-    const err = new Error('WORLDLABS_API_KEY is not configured on the backend');
+    const err = new Error(
+      account === 'stem'
+        ? 'WORLDLABS_STEM_API_KEY is not configured on the backend'
+        : 'WORLDLABS_API_KEY is not configured on the backend'
+    );
     err.status = 503;
     throw err;
   }
@@ -25,7 +36,11 @@ async function worldLabsRequest(path, init = {}) {
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    const err = new Error((data && (data.error || data.message)) || `World Labs request failed (${res.status})`);
+    const providerMsg =
+      (data && (data.error || data.message || data.detail)) || null;
+    const err = new Error(
+      providerMsg || `World Labs request failed (${res.status})`
+    );
     err.status = res.status;
     err.details = data;
     throw err;
@@ -34,7 +49,7 @@ async function worldLabsRequest(path, init = {}) {
 }
 
 router.post('/generate', async (req, res) => {
-  const { prompt, displayName, model } = req.body || {};
+  const { prompt, displayName, model, account } = req.body || {};
   if (!prompt || typeof prompt !== 'string') {
     return res.status(400).json({ error: 'prompt (string) is required' });
   }
@@ -50,7 +65,7 @@ router.post('/generate', async (req, res) => {
           text_prompt: prompt.trim(),
         },
       }),
-    });
+    }, account || 'default');
     return res.json(operation);
   } catch (err) {
     console.error(err);
@@ -63,8 +78,13 @@ router.post('/generate', async (req, res) => {
 
 router.get('/operations/:operationId', async (req, res) => {
   const { operationId } = req.params;
+  const { account } = req.query;
   try {
-    const operation = await worldLabsRequest(`/operations/${operationId}`, { method: 'GET' });
+    const operation = await worldLabsRequest(
+      `/operations/${operationId}`,
+      { method: 'GET' },
+      account || 'default'
+    );
     return res.json(operation);
   } catch (err) {
     console.error(err);
@@ -77,8 +97,13 @@ router.get('/operations/:operationId', async (req, res) => {
 
 router.get('/:worldId', async (req, res) => {
   const { worldId } = req.params;
+  const { account } = req.query;
   try {
-    const worldResponse = await worldLabsRequest(`/worlds/${worldId}`, { method: 'GET' });
+    const worldResponse = await worldLabsRequest(
+      `/worlds/${worldId}`,
+      { method: 'GET' },
+      account || 'default'
+    );
     if (worldResponse && worldResponse.world) return res.json(worldResponse.world);
     return res.json(worldResponse);
   } catch (err) {

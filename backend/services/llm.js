@@ -23,7 +23,7 @@ async function interpretPrompt(prompt) {
         messages: [
           {
             role: 'system',
-            content: `You are a historical scene interpreter. Given a user prompt, return ONLY valid JSON matching this schema:
+            content: `You are an educational 3D scene interpreter for humanities and STEM prompts. Given a user prompt, return ONLY valid JSON matching this schema:
 {
   "prompt_type": "place | event | ambiguous",
   "resolved_scene": {
@@ -34,7 +34,7 @@ async function interpretPrompt(prompt) {
   },
   "assumptions": []
 }
-Be concise. If the prompt is ambiguous, choose the most historically interesting interpretation.`,
+Be concise. If the prompt is ambiguous, choose the most educational interpretation.`,
           },
           { role: 'user', content: prompt },
         ],
@@ -63,7 +63,7 @@ async function generateSceneGraph(interpretation, prompt) {
         messages: [
           {
             role: 'system',
-            content: `You are a historical scene designer. Generate a bounded 3D scene graph from the given interpretation. Return ONLY valid JSON:
+            content: `You are an educational scene designer. Generate a bounded 3D scene graph from the given interpretation. Return ONLY valid JSON:
 {
   "setting": { "location": "", "time_period": "", "time_of_day": "" },
   "scene_type": "",
@@ -82,7 +82,7 @@ Rules:
 - Include 5-8 elements total
 - Always include at least one environment element
 - Use specific spatial hints (e.g. "foreground left", "center background", "right side mid-distance")
-- Every element must be historically accurate
+- Elements must be domain-accurate (historical for humanities prompts, scientifically accurate for STEM prompts)
 - Scene represents a single bounded moment in time`,
           },
           {
@@ -114,12 +114,12 @@ async function generateChatResponse(sceneGraph, focusedElement, question) {
         messages: [
           {
             role: 'system',
-            content: `You are an expert historical guide for an immersive 3D scene.
+            content: `You are an expert educational guide for an immersive 3D scene.
 Scene context: ${sceneContext}
 Rules:
 - Answer in 1-3 sentences only
 - Only reference elements present in the scene
-- Be historically accurate and specific
+- Be accurate and specific for the scene domain (history or science)
 - If asked about a focused element, prioritize that in your answer
 - Never hallucinate objects or people not mentioned in the scene`,
           },
@@ -189,7 +189,7 @@ function mockInterpret(prompt) {
 }
 
 function mockChatResponse(sceneGraph, focusedElement, question) {
-  if (!sceneGraph) return "No scene is loaded yet. Please enter a prompt to explore a historical scene.";
+  if (!sceneGraph) return "No scene is loaded yet. Please enter a prompt to explore a scene.";
 
   const { setting } = sceneGraph;
   const q = question.toLowerCase();

@@ -3,6 +3,8 @@ import type { SceneGraph, SceneElement, ChatMessage, PromptInterpretation, Marbl
 import { generateWorld, getWorld, getWorldOperation, sendChat } from '@/lib/atlas/api';
 import { getMockScene, getMockChatResponse } from '@/lib/atlas/mockData';
 
+type WorldLabsAccount = 'default' | 'stem';
+
 interface SceneState {
   prompt: string;
   isLoading: boolean;
@@ -11,6 +13,7 @@ interface SceneState {
   sceneGraph: SceneGraph | null;
   world: MarbleWorld | null;
   worldOperationId: string | null;
+  worldLabsAccount: WorldLabsAccount;
   focusedElement: SceneElement | null;
   chatHistory: ChatMessage[];
   isChatLoading: boolean;
@@ -18,8 +21,9 @@ interface SceneState {
   backendOnline: boolean;
 
   setPrompt: (p: string) => void;
-  loadScene: (p: string) => Promise<void>;
-  loadWorldById: (worldId: string, label?: string) => Promise<void>;
+  loadScene: (p: string, options?: { account?: WorldLabsAccount }) => Promise<void>;
+  loadWorldById: (worldId: string, label?: string, options?: { account?: WorldLabsAccount }) => Promise<void>;
+  refreshCurrentWorld: () => Promise<void>;
   loadDemoScene: (sceneKey: string) => void;
   setFocusedElement: (el: SceneElement | null) => void;
   sendChatMessage: (msg: string) => Promise<void>;
@@ -34,6 +38,19 @@ function makeId() {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatElapsed(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins <= 0) return `${secs}s`;
+  return `${mins}m ${secs}s`;
+}
+
+function hasRenderableSplat(world: MarbleWorld | null): boolean {
+  if (!world) return false;
+  const spz = world.assets?.splats?.spz_urls;
+  return !!(spz?.['500k'] || spz?.['100k'] || spz?.full_res);
 }
 
 function welcomeMessage(sceneGraph: SceneGraph, assumptions: string[]): ChatMessage {
@@ -53,6 +70,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   sceneGraph: null,
   world: null,
   worldOperationId: null,
+  worldLabsAccount: 'default',
   focusedElement: null,
   chatHistory: [],
   isChatLoading: false,
@@ -66,7 +84,20 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     void get().loadScene(sceneKey);
   },
 
-  loadWorldById: async (worldId: string, label?: string) => {
+  refreshCurrentWorld: async () => {
+    const { world, worldLabsAccount } = get();
+    const worldId = world?.id || world?.world_id;
+    if (!worldId) return;
+    try {
+      const refreshed = await getWorld(worldId, worldLabsAccount);
+      set({ world: refreshed });
+    } catch {
+      // Silent background retry; UI already has fallback action.
+    }
+  },
+
+  loadWorldById: async (worldId: string, label?: string, options?: { account?: WorldLabsAccount }) => {
+    const account = options?.account || 'default';
     let usedFallback = false;
     set({
       isLoading: true,
@@ -75,11 +106,25 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       loadingStep: 'Loading world...',
       world: null,
       worldOperationId: null,
+      worldLabsAccount: account,
       prompt: label || worldId,
       chatHistory: [],
     });
     try {
-      const world = await getWorld(worldId);
+      let world = await getWorld(worldId, account);
+
+      // Keep behavior consistent with curated Humanities load: wait briefly for SPZ
+      // assets to become available so the in-app Spark viewer can start.
+      if (!hasRenderableSplat(world)) {
+        set({ loadingStep: 'Preparing world assets for in-app viewer...' });
+        const maxAssetPolls = 30;
+        for (let i = 0; i < maxAssetPolls; i++) {
+          await sleep(2000);
+          world = await getWorld(worldId, account);
+          if (hasRenderableSplat(world)) break;
+        }
+      }
+
       const sceneGraph = getMockScene(label || world.display_name || 'Han Dynasty Village');
       set({
         world,
@@ -101,8 +146,9 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     }
   },
 
-  loadScene: async (p: string) => {
+  loadScene: async (p: string, options?: { account?: WorldLabsAccount }) => {
     const prompt = p.trim();
+    const account = options?.account || 'default';
     const sceneGraph = getMockScene(prompt);
     set({
       isLoading: true,
@@ -113,24 +159,27 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       sceneGraph,
       world: null,
       worldOperationId: null,
+      worldLabsAccount: account,
       loadingStep: 'Submitting world generation request...',
     });
 
     try {
-      const operation = await generateWorld(prompt);
+      const operation = await generateWorld(prompt, 'marble-1.1', account);
       if (!operation.operation_id) {
         throw new Error('World Labs did not return an operation id.');
       }
 
       set({
         worldOperationId: operation.operation_id,
-        loadingStep: 'World generation started...',
+        loadingStep: 'World generation started... this can take a few minutes.',
       });
 
       let world: MarbleWorld | null = operation.response || null;
-      const maxPollAttempts = 120;
+      const pollIntervalMs = 2500;
+      const maxPollAttempts = 240;
+      const startedAt = Date.now();
       for (let attempt = 0; attempt < maxPollAttempts; attempt++) {
-        const op = await getWorldOperation(operation.operation_id);
+        const op = await getWorldOperation(operation.operation_id, account);
 
         if (op.error) {
           throw new Error(op.error.message || 'World generation failed.');
@@ -139,6 +188,11 @@ export const useSceneStore = create<SceneState>((set, get) => ({
         const progressDescription = op.metadata?.progress?.description;
         if (progressDescription) {
           set({ loadingStep: progressDescription });
+        } else if (attempt % 4 === 0) {
+          const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+          set({
+            loadingStep: `World generation in progress... (${formatElapsed(elapsedSeconds)} elapsed)`,
+          });
         }
 
         if (op.done) {
@@ -147,16 +201,36 @@ export const useSceneStore = create<SceneState>((set, get) => ({
           } else {
             const worldId = op.metadata?.world_id;
             if (!worldId) throw new Error('World generation completed without a world id.');
-            world = await getWorld(worldId);
+            world = await getWorld(worldId, account);
           }
           break;
         }
 
-        await sleep(2500);
+        // Some providers expose world_id before done=true. Try early fetch so UI
+        // doesn't appear stuck when the world is actually already available.
+        const provisionalWorldId = op.metadata?.world_id;
+        if (provisionalWorldId && attempt % 3 === 0) {
+          try {
+            const provisionalWorld = await getWorld(provisionalWorldId, account);
+            if (provisionalWorld?.world_marble_url) {
+              world = provisionalWorld;
+              set({ loadingStep: 'World ready.' });
+              break;
+            }
+          } catch {
+            // Keep polling until the world becomes available.
+          }
+        }
+
+        await sleep(pollIntervalMs);
       }
 
       if (!world || !world.world_marble_url) {
-        throw new Error('World generation timed out or returned no marble URL.');
+        throw new Error(
+          `World generation timed out after ${Math.round(
+            (maxPollAttempts * pollIntervalMs) / 60000
+          )} minutes (operation: ${operation.operation_id}).`
+        );
       }
 
       set({ world, loadingStep: 'World ready.' });
@@ -205,6 +279,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       sceneGraph: null,
       world: null,
       worldOperationId: null,
+      worldLabsAccount: 'default',
       focusedElement: null,
       chatHistory: [],
       isChatLoading: false,

@@ -539,6 +539,192 @@
   text-align: center;
 }
 
+.atlas-track-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 0.95rem;
+}
+
+.atlas-track-pane {
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  border-radius: 20px;
+  min-height: 210px;
+  text-align: left;
+  padding: 1.05rem 0.95rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  transition: transform 0.14s, border-color 0.18s, background 0.18s;
+}
+
+.atlas-track-pane-humanities {
+  background: linear-gradient(160deg, rgba(255, 244, 229, 0.66), rgba(255, 250, 245, 0.36));
+}
+
+.atlas-track-pane-stem {
+  background: linear-gradient(160deg, rgba(228, 244, 255, 0.72), rgba(244, 250, 255, 0.38));
+}
+
+.atlas-track-pane:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+.atlas-track-pane:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.atlas-track-pane-kicker {
+  display: block;
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(58, 76, 116, 0.62);
+  margin-bottom: 0.22rem;
+  font-weight: 700;
+}
+
+.atlas-track-pane-title {
+  display: block;
+  font-size: 1.18rem;
+  line-height: 1.2;
+  color: rgba(27, 41, 72, 0.97);
+  font-weight: 650;
+  margin-bottom: 0.3rem;
+}
+
+.atlas-track-pane-subtitle {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(43, 58, 94, 0.8);
+}
+
+.atlas-track-detail {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  padding: 0.95rem 0.95rem 1rem;
+  margin-bottom: 0.95rem;
+}
+
+.atlas-track-back {
+  border: none;
+  background: none;
+  color: rgba(46, 63, 101, 0.78);
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.65rem;
+}
+
+.atlas-track-back:hover:not(:disabled) {
+  color: rgba(30, 44, 78, 0.95);
+}
+
+.atlas-track-back:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.atlas-track-detail-title {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(30, 42, 72, 0.95);
+  letter-spacing: 0.01em;
+}
+
+.atlas-track-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: rgba(29, 39, 67, 0.92);
+  font-size: 0.88rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  outline: none;
+  font-family: inherit;
+  margin-top: 0.35rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.atlas-track-input::placeholder {
+  color: rgba(56, 73, 111, 0.52);
+}
+
+.atlas-track-input:focus {
+  border-color: rgba(255, 182, 214, 0.9);
+  box-shadow: 0 0 0 3px rgba(255, 182, 214, 0.18);
+}
+
+.atlas-track-input:disabled {
+  opacity: 0.6;
+}
+
+.atlas-track-note {
+  margin: 0.45rem 0 0.7rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: rgba(56, 73, 111, 0.62);
+}
+
+.atlas-track-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(56, 73, 111, 0.62);
+  font-weight: 700;
+}
+
+.atlas-track-card h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(30, 42, 72, 0.95);
+  letter-spacing: 0.01em;
+}
+
+.atlas-track-desc {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(42, 57, 91, 0.76);
+}
+
+.atlas-track-btn {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  color: rgba(27, 40, 68, 0.9);
+  font-size: 0.75rem;
+  font-weight: 650;
+  padding: 0.48rem 0.7rem;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.atlas-track-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 233, 244, 0.86);
+  border-color: rgba(255, 184, 215, 0.95);
+}
+
+.atlas-track-btn-stem:hover:not(:disabled) {
+  background: rgba(224, 244, 255, 0.82);
+  border-color: rgba(165, 220, 255, 0.95);
+}
+
+.atlas-track-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .atlas-input-row {
   display: flex;
   gap: 0.55rem;
@@ -776,6 +962,12 @@
 }
 
 .atlas-chip:disabled { opacity: 0.42; cursor: not-allowed; }
+
+@media (max-width: 760px) {
+  .atlas-track-split {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ─── Chat Panel ─────────────────────────────────────────────────────── */
 

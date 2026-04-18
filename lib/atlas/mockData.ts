@@ -2,6 +2,23 @@ import type { PromptInterpretation, SceneGraph } from './types';
 
 export function getMockInterpretation(prompt: string): PromptInterpretation {
   const p = prompt.toLowerCase();
+  if (
+    p.includes('photosynthesis') ||
+    p.includes('chloroplast') ||
+    p.includes('stomata') ||
+    p.includes('science lab')
+  ) {
+    return {
+      prompt_type: 'place',
+      resolved_scene: {
+        location: 'Interactive Plant Cell Lab',
+        time_period: 'Modern Classroom Demonstration',
+        time_of_day: 'midday',
+        scene_scope: 'immersive chloroplast and leaf process walkthrough',
+      },
+      assumptions: ['Interpreted as a STEM photosynthesis experiment scene'],
+    };
+  }
   if (p.includes('han') || p.includes('dynasty') || p.includes('village')) {
     return {
       prompt_type: 'place',
@@ -66,6 +83,14 @@ export function getMockInterpretation(prompt: string): PromptInterpretation {
 export function getMockScene(prompt: string): SceneGraph {
   const p = prompt.toLowerCase();
 
+  if (
+    p.includes('photosynthesis') ||
+    p.includes('chloroplast') ||
+    p.includes('stomata') ||
+    p.includes('science lab')
+  ) {
+    return PHOTOSYNTHESIS_LAB;
+  }
   if (p.includes('han') || p.includes('dynasty') || p.includes('village')) {
     return HAN_DYNASTY_VILLAGE;
   }
@@ -214,6 +239,80 @@ const HAN_DYNASTY_VILLAGE: SceneGraph = {
         'A modest ancestral shrine with incense offerings where families honor lineage and household spirits.',
       importance: 'medium',
       position_hint: 'right mid-ground, beside courtyard homes',
+    },
+  ],
+};
+
+const PHOTOSYNTHESIS_LAB: SceneGraph = {
+  setting: {
+    location: 'Interactive Plant Cell Lab',
+    time_period: 'Modern Classroom Demonstration',
+    time_of_day: 'midday',
+  },
+  scene_type: 'science_experiment',
+  elements: [
+    {
+      id: 'sunlight_lamp',
+      type: 'object',
+      name: 'Sunlight Simulation Lamp',
+      description:
+        'A calibrated light array that provides photons to drive the light-dependent reactions.',
+      importance: 'high',
+      position_hint: 'upper left foreground, angled toward chloroplast',
+    },
+    {
+      id: 'leaf_surface',
+      type: 'environment',
+      name: 'Leaf Cross-Section',
+      description:
+        'A magnified layered leaf model showing epidermis, mesophyll, veins, and stomata in 3D.',
+      importance: 'high',
+      position_hint: 'center background, full width',
+    },
+    {
+      id: 'stomata_gate',
+      type: 'action',
+      name: 'Stomata CO2 Intake Gate',
+      description:
+        'Guard cells open and close pores that regulate carbon dioxide intake and water vapor loss.',
+      importance: 'high',
+      position_hint: 'left mid-ground, on leaf surface',
+    },
+    {
+      id: 'water_channel',
+      type: 'action',
+      name: 'Water Transport Channel',
+      description:
+        'A xylem pathway carrying water upward from roots into photosynthetic tissues.',
+      importance: 'medium',
+      position_hint: 'right mid-ground, vein pathway',
+    },
+    {
+      id: 'chloroplast_core',
+      type: 'object',
+      name: 'Chloroplast Reactor',
+      description:
+        'An enlarged chloroplast showing thylakoid stacks for light reactions and stroma for the Calvin cycle.',
+      importance: 'high',
+      position_hint: 'center foreground, floating cutaway model',
+    },
+    {
+      id: 'glucose_meter',
+      type: 'object',
+      name: 'Glucose Output Meter',
+      description:
+        'A live monitor that tracks sugar production as light, water, and CO2 inputs change.',
+      importance: 'medium',
+      position_hint: 'right foreground, beside chloroplast model',
+    },
+    {
+      id: 'oxygen_bubbles',
+      type: 'action',
+      name: 'Oxygen Release Stream',
+      description:
+        'Visible oxygen bubbles representing O2 released after water molecules are split.',
+      importance: 'medium',
+      position_hint: 'upper right, rising from reaction chamber',
     },
   ],
 };

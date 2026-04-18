@@ -43,6 +43,7 @@ export interface ChatMessage {
 
 export interface MarbleWorld {
   id: string;
+  world_id?: string;
   display_name?: string;
   world_marble_url: string;
   assets?: {
