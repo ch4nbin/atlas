@@ -768,6 +768,146 @@
   cursor: not-allowed;
 }
 
+/* ─── Library button ─────────────────────────────────────────────────── */
+
+.atlas-library-btn {
+  width: 100%;
+  border: 1px dashed rgba(200, 180, 220, 0.65);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.28);
+  color: rgba(90, 60, 120, 0.75);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.52rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  margin-bottom: 0.6rem;
+}
+
+.atlas-library-btn:hover:not(:disabled) {
+  background: rgba(255, 240, 252, 0.55);
+  border-color: rgba(210, 160, 230, 0.85);
+  color: rgba(80, 40, 110, 0.9);
+}
+
+.atlas-library-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ─── Library modal overlay ──────────────────────────────────────────── */
+
+.atlas-library-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 20, 50, 0.28);
+  backdrop-filter: blur(4px);
+  animation: atlas-slide-up 0.16s ease;
+}
+
+.atlas-library-modal {
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 22px;
+  padding: 1.25rem 1.35rem 1.4rem;
+  backdrop-filter: blur(28px);
+  box-shadow: 0 20px 50px rgba(35, 20, 70, 0.16);
+  width: min(520px, 92vw);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.atlas-library-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.atlas-library-modal-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(44, 30, 80, 0.65);
+}
+
+.atlas-library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+@media (min-width: 480px) {
+  .atlas-library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.atlas-library-card {
+  background: rgba(255, 255, 255, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 16px;
+  padding: 0.85rem 0.75rem 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: transform 0.14s, background 0.14s, border-color 0.14s;
+}
+
+.atlas-library-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.64);
+  border-color: rgba(200, 180, 230, 0.9);
+}
+
+.atlas-library-card-icon {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.atlas-library-card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(36, 22, 68, 0.88);
+  line-height: 1.2;
+}
+
+.atlas-library-card-desc {
+  font-size: 0.68rem;
+  color: rgba(56, 44, 88, 0.62);
+  line-height: 1.4;
+}
+
+/* Map detail (inside modal) */
+
+.atlas-map-detail-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 0.55rem;
+}
+
+.atlas-map-detail-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: rgba(36, 22, 68, 0.9);
+}
+
+.atlas-map-detail-desc {
+  margin: 0 0 1.1rem;
+  font-size: 0.78rem;
+  color: rgba(50, 38, 80, 0.72);
+  line-height: 1.6;
+}
+
 .atlas-input-row {
   display: flex;
   gap: 0.55rem;
