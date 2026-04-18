@@ -359,12 +359,16 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   setFocusedElement: (el) => set({ focusedElement: el }),
 
   sendChatMessage: async (msg: string) => {
-    const { sceneGraph, focusedElement, stemExperiment } = get();
+    const { sceneGraph, focusedElement, chatHistory } = get();
+    const { stemExperiment } = get();
     const userMsg: ChatMessage = { id: makeId(), role: 'user', content: msg, timestamp: Date.now() };
     set((s) => ({ chatHistory: [...s.chatHistory, userMsg], isChatLoading: true }));
 
     try {
-      const response = await sendChat(sceneGraph, focusedElement, msg, stemExperiment);
+      const response = await sendChat(sceneGraph, focusedElement, msg, stemExperiment, [
+        ...chatHistory.map((m) => ({ role: m.role, content: m.content })),
+        { role: 'user', content: msg },
+      ]);
       set((s) => ({
         chatHistory: [
           ...s.chatHistory,

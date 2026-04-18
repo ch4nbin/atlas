@@ -66,7 +66,8 @@ export async function sendChat(
   sceneGraph: SceneGraph | null,
   focusedElement: SceneElement | null,
   question: string,
-  experimentState: StemExperimentState | null = null
+  experimentState: StemExperimentState | null = null,
+  history: { role: 'user' | 'assistant'; content: string }[] = []
 ): Promise<string> {
   // Always attempt chat even if backendStatus is 'offline' — a prior scene/interpret
   // failure shouldn't permanently suppress chat. Reset so post() will try.
@@ -77,6 +78,7 @@ export async function sendChat(
       focusedElement,
       question,
       experimentState,
+      history,
     }, 15000);
     return response;
   } catch {

@@ -90,7 +90,9 @@ Rules:
   return buildSceneFromInterpretation(interpretation);
 }
 
-async function generateChatResponse(sceneGraph, focusedElement, question, experimentState = null) {
+async function generateChatResponse(sceneGraph, focusedElement, question, options = {}) {
+  const experimentState = options?.experimentState || null;
+  const history = Array.isArray(options?.history) ? options.history : [];
   const genAI = getGemini();
 
   const sceneContext = buildSceneContext(sceneGraph, focusedElement, experimentState);
@@ -113,10 +115,24 @@ Guidelines:
 - If the user asks something outside this scene, briefly redirect to the scene in one sentence
 - Speak in present tense as if the user is standing inside the scene right now
 - Be specific and vivid — no filler or generic statements
-- Do not use bullet points or headers; respond in natural flowing prose`,
+- Do not use bullet points or headers; respond in natural flowing prose
+- NEVER start a response with "Welcome to..." — you have already greeted the user
+- If the user's message is vague or unclear, ask a natural clarifying question rather than defaulting to a scene introduction
+- Use the conversation history to understand follow-up questions and references like "that", "it", "explain more", "simpler"`,
         generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
       });
-      const result = await model.generateContent(question);
+
+      // Build prior turns — Gemini requires history to start with a user turn,
+      // so drop any leading assistant messages (e.g. the welcome message).
+      const allTurns = history.filter((m) => m.role === 'user' || m.role === 'assistant');
+      const firstUserIdx = allTurns.findIndex((m) => m.role === 'user');
+      const priorTurns = (firstUserIdx === -1 ? [] : allTurns.slice(firstUserIdx)).map((m) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      }));
+
+      const chat = model.startChat({ history: priorTurns });
+      const result = await chat.sendMessage(question);
       return result.response.text().trim();
     } catch (err) {
       console.error('Gemini chat error:', err.message);
