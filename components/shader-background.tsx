@@ -46,7 +46,7 @@ export default function ShaderBackground({ children }: ShaderBackgroundProps) {
         className="absolute inset-0 w-full h-full object-cover"
       >
         <source
-          src="https://res.cloudinary.com/dqesvrisb/video/upload/v1776474517/Plants_swaying_in_202604172106_online-video-cutter.com_wjqprb.mp4"
+          src="https://res.cloudinary.com/dqesvrisb/video/upload/v1776479082/Untitled_online-video-cutter.com_pvzxhg.mp4"
           type="video/mp4"
         />
       </video>
