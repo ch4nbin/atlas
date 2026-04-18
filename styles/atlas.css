@@ -189,6 +189,15 @@
   padding-left: 0.3rem;
 }
 
+.atlas-home-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.atlas-home-link:hover {
+  opacity: 0.9;
+}
+
 .atlas-topbar-input {
   flex: 1;
   min-width: 0;
@@ -228,9 +237,20 @@
   box-shadow: 0 10px 24px rgba(15, 15, 20, 0.22);
 }
 
+.atlas-topbar-btn-secondary {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  color: rgba(34, 49, 83, 0.88);
+  box-shadow: none;
+}
+
 .atlas-topbar-btn:hover:not(:disabled) {
   background: #090909;
   transform: translateY(-1px);
+}
+
+.atlas-topbar-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 232, 242, 0.84);
 }
 
 .atlas-topbar-btn:disabled {

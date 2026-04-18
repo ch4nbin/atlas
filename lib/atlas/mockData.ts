@@ -2,6 +2,18 @@ import type { PromptInterpretation, SceneGraph } from './types';
 
 export function getMockInterpretation(prompt: string): PromptInterpretation {
   const p = prompt.toLowerCase();
+  if (p.includes('han') || p.includes('dynasty') || p.includes('village')) {
+    return {
+      prompt_type: 'place',
+      resolved_scene: {
+        location: 'Han Dynasty Village, Northern China',
+        time_period: 'Eastern Han Dynasty, circa 120 CE',
+        time_of_day: 'late afternoon',
+        scene_scope: 'village center and fields',
+      },
+      assumptions: ['Interpreted as a rural Han Dynasty village setting'],
+    };
+  }
   if (p.includes('boston') || p.includes('tea party') || p.includes('1773')) {
     return {
       prompt_type: 'event',
@@ -54,6 +66,9 @@ export function getMockInterpretation(prompt: string): PromptInterpretation {
 export function getMockScene(prompt: string): SceneGraph {
   const p = prompt.toLowerCase();
 
+  if (p.includes('han') || p.includes('dynasty') || p.includes('village')) {
+    return HAN_DYNASTY_VILLAGE;
+  }
   if (p.includes('boston') || p.includes('tea party') || p.includes('1773')) {
     return BOSTON_TEA_PARTY;
   }
@@ -137,6 +152,71 @@ export function getMockChatResponse(
 }
 
 // ─── Hardcoded scenes ─────────────────────────────────────────────────────────
+
+const HAN_DYNASTY_VILLAGE: SceneGraph = {
+  setting: {
+    location: 'Han Dynasty Village, Northern China',
+    time_period: 'Eastern Han Dynasty, circa 120 CE',
+    time_of_day: 'late afternoon',
+  },
+  scene_type: 'historical_place',
+  elements: [
+    {
+      id: 'courtyard_houses',
+      type: 'object',
+      name: 'Earthen Courtyard Houses',
+      description:
+        'Ram-earth homes with timber frames and tiled roofs arranged around shared family courtyards.',
+      importance: 'high',
+      position_hint: 'center and mid-ground, clustered settlement',
+    },
+    {
+      id: 'millet_fields',
+      type: 'environment',
+      name: 'Millet and Wheat Fields',
+      description:
+        'Cultivated strips of millet and wheat surrounding the village, worked by families and ox-drawn plows.',
+      importance: 'high',
+      position_hint: 'background and left side, beyond homes',
+    },
+    {
+      id: 'village_well',
+      type: 'object',
+      name: 'Village Well',
+      description:
+        'A stone-lined communal well where villagers gather for water, conversation, and local news.',
+      importance: 'medium',
+      position_hint: 'foreground center, open square',
+    },
+    {
+      id: 'scholar_scribe',
+      type: 'actor',
+      name: 'Local Han Scribe',
+      description:
+        'A literate villager maintaining bamboo-slip records of grain tax, births, and clan obligations.',
+      importance: 'medium',
+      position_hint: 'right foreground, near a writing table',
+    },
+    {
+      id: 'ox_cart',
+      type: 'object',
+      name: 'Wooden Ox Cart',
+      description:
+        'A heavy two-wheeled cart used to transport grain, tools, and clay jars between fields and homes.',
+      importance: 'low',
+      position_hint: 'left foreground, near field path',
+    },
+    {
+      id: 'shrine',
+      type: 'object',
+      name: 'Ancestral Shrine',
+      description:
+        'A modest ancestral shrine with incense offerings where families honor lineage and household spirits.',
+      importance: 'medium',
+      position_hint: 'right mid-ground, beside courtyard homes',
+    },
+  ],
+};
 
 const BOSTON_TEA_PARTY: SceneGraph = {
   setting: {
