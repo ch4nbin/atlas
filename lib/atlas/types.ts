@@ -40,3 +40,43 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
 }
+
+export interface MarbleWorld {
+  id: string;
+  display_name?: string;
+  world_marble_url: string;
+  assets?: {
+    caption?: string;
+    thumbnail_url?: string;
+    splats?: {
+      spz_urls?: {
+        ['100k']?: string;
+        ['500k']?: string;
+        full_res?: string;
+      };
+    };
+    mesh?: {
+      collider_mesh_url?: string;
+    };
+    imagery?: {
+      pano_url?: string;
+    };
+  };
+  created_at?: string | null;
+  updated_at?: string | null;
+  model?: string | null;
+}
+
+export interface MarbleOperation {
+  operation_id: string;
+  done: boolean;
+  error: { message?: string; code?: string } | null;
+  metadata?: {
+    world_id?: string;
+    progress?: {
+      status?: string;
+      description?: string;
+    };
+  } | null;
+  response?: MarbleWorld | null;
+}

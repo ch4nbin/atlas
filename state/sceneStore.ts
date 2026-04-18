@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { SceneGraph, SceneElement, ChatMessage, PromptInterpretation } from '@/lib/atlas/types';
-import { interpretPrompt, generateScene, sendChat } from '@/lib/atlas/api';
+import type { SceneGraph, SceneElement, ChatMessage, PromptInterpretation, MarbleWorld } from '@/lib/atlas/types';
+import { generateWorld, getWorld, getWorldOperation, sendChat } from '@/lib/atlas/api';
 import { getMockScene, getMockChatResponse } from '@/lib/atlas/mockData';
 
 interface SceneState {
@@ -9,6 +9,8 @@ interface SceneState {
   loadingStep: string;
   interpretation: PromptInterpretation | null;
   sceneGraph: SceneGraph | null;
+  world: MarbleWorld | null;
+  worldOperationId: string | null;
   focusedElement: SceneElement | null;
   chatHistory: ChatMessage[];
   isChatLoading: boolean;
@@ -17,6 +19,7 @@ interface SceneState {
 
   setPrompt: (p: string) => void;
   loadScene: (p: string) => Promise<void>;
+  loadWorldById: (worldId: string, label?: string) => Promise<void>;
   loadDemoScene: (sceneKey: string) => void;
   setFocusedElement: (el: SceneElement | null) => void;
   sendChatMessage: (msg: string) => Promise<void>;
@@ -27,6 +30,10 @@ interface SceneState {
 let msgCounter = 0;
 function makeId() {
   return `msg_${++msgCounter}_${Date.now()}`;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function welcomeMessage(sceneGraph: SceneGraph, assumptions: string[]): ChatMessage {
@@ -44,6 +51,8 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   loadingStep: '',
   interpretation: null,
   sceneGraph: null,
+  world: null,
+  worldOperationId: null,
   focusedElement: null,
   chatHistory: [],
   isChatLoading: false,
@@ -53,32 +62,104 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   setPrompt: (p) => set({ prompt: p }),
   setBackendOnline: (online) => set({ backendOnline: online }),
 
-  // Bypasses all API calls — instant, zero-dependency
   loadDemoScene: (sceneKey: string) => {
-    const sceneGraph = getMockScene(sceneKey);
+    void get().loadScene(sceneKey);
+  },
+
+  loadWorldById: async (worldId: string, label?: string) => {
+    let usedFallback = false;
     set({
-      sceneGraph,
-      prompt: sceneKey,
-      focusedElement: null,
+      isLoading: true,
       error: null,
-      chatHistory: [welcomeMessage(sceneGraph, [`Demo scene: ${sceneKey}`])],
+      focusedElement: null,
+      loadingStep: 'Loading world...',
+      world: null,
+      worldOperationId: null,
+      prompt: label || worldId,
+      chatHistory: [],
     });
+    try {
+      const world = await getWorld(worldId);
+      const sceneGraph = getMockScene(label || world.display_name || 'Han Dynasty Village');
+      set({
+        world,
+        sceneGraph,
+        chatHistory: [welcomeMessage(sceneGraph, ['Loaded from World Labs world ID'])],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      if (msg.includes('World not found') && label) {
+        usedFallback = true;
+        await get().loadScene(label);
+        return;
+      }
+      set({ error: msg });
+    } finally {
+      if (!usedFallback) {
+        set({ isLoading: false, loadingStep: '' });
+      }
+    }
   },
 
   loadScene: async (p: string) => {
-    set({ isLoading: true, error: null, focusedElement: null, chatHistory: [], prompt: p });
-    try {
-      set({ loadingStep: 'Interpreting your prompt...' });
-      const interpretation = await interpretPrompt(p);
+    const prompt = p.trim();
+    const sceneGraph = getMockScene(prompt);
+    set({
+      isLoading: true,
+      error: null,
+      focusedElement: null,
+      chatHistory: [welcomeMessage(sceneGraph, [`Using World Labs generation for: ${prompt}`])],
+      prompt,
+      sceneGraph,
+      world: null,
+      worldOperationId: null,
+      loadingStep: 'Submitting world generation request...',
+    });
 
-      set({ interpretation, loadingStep: 'Generating scene...' });
-      const sceneGraph = await generateScene(interpretation, p);
+    try {
+      const operation = await generateWorld(prompt);
+      if (!operation.operation_id) {
+        throw new Error('World Labs did not return an operation id.');
+      }
 
       set({
-        sceneGraph,
-        loadingStep: '',
-        chatHistory: [welcomeMessage(sceneGraph, interpretation.assumptions)],
+        worldOperationId: operation.operation_id,
+        loadingStep: 'World generation started...',
       });
+
+      let world: MarbleWorld | null = operation.response || null;
+      const maxPollAttempts = 120;
+      for (let attempt = 0; attempt < maxPollAttempts; attempt++) {
+        const op = await getWorldOperation(operation.operation_id);
+
+        if (op.error) {
+          throw new Error(op.error.message || 'World generation failed.');
+        }
+
+        const progressDescription = op.metadata?.progress?.description;
+        if (progressDescription) {
+          set({ loadingStep: progressDescription });
+        }
+
+        if (op.done) {
+          if (op.response?.world_marble_url) {
+            world = op.response;
+          } else {
+            const worldId = op.metadata?.world_id;
+            if (!worldId) throw new Error('World generation completed without a world id.');
+            world = await getWorld(worldId);
+          }
+          break;
+        }
+
+        await sleep(2500);
+      }
+
+      if (!world || !world.world_marble_url) {
+        throw new Error('World generation timed out or returned no marble URL.');
+      }
+
+      set({ world, loadingStep: 'World ready.' });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       set({ error: msg });
@@ -122,6 +203,8 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       loadingStep: '',
       interpretation: null,
       sceneGraph: null,
+      world: null,
+      worldOperationId: null,
       focusedElement: null,
       chatHistory: [],
       isChatLoading: false,

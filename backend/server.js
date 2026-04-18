@@ -1,6 +1,7 @@
 'use strict';
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
@@ -9,6 +10,7 @@ const interpretRouter = require('./routes/interpret');
 const sceneRouter = require('./routes/scene');
 const chatRouter = require('./routes/chat');
 const assetsRouter = require('./routes/assets');
+const worldsRouter = require('./routes/worlds');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,11 +23,13 @@ app.use('/api/interpret', interpretRouter);
 app.use('/api/scene', sceneRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/assets', assetsRouter);
+app.use('/api/worlds', worldsRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     aiEnabled: !!process.env.OPENAI_API_KEY,
+    worldLabsEnabled: !!process.env.WORLDLABS_API_KEY,
     timestamp: new Date().toISOString(),
   });
 });
@@ -33,6 +37,7 @@ app.get('/api/health', (_req, res) => {
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
 app.listen(PORT, () => {
-  const aiStatus = process.env.OPENAI_API_KEY ? 'OpenAI enabled' : 'Mock mode (no API key)';
-  console.log(`Atlas backend on http://localhost:${PORT} — ${aiStatus}`);
+  const openAiStatus = process.env.OPENAI_API_KEY ? 'OpenAI enabled' : 'OpenAI disabled';
+  const worldLabsStatus = process.env.WORLDLABS_API_KEY ? 'World Labs enabled' : 'World Labs disabled';
+  console.log(`Atlas backend on http://localhost:${PORT} — ${openAiStatus}, ${worldLabsStatus}`);
 });

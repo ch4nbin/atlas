@@ -6,9 +6,10 @@ import { useSceneStore } from '@/state/sceneStore';
 
 const DEV_SCENE_KEY = 'Han Dynasty Village';
 const DEV_SCENE_LABEL = 'Han Dynasty Village';
+const DEV_WORLD_ID = '7e486a4a-abe4-4505-b9d9-923ec54ac10b';
 
 export function PromptInput() {
-  const { loadDemoScene, reset, isLoading, loadingStep, sceneGraph, error, prompt } =
+  const { loadWorldById, reset, isLoading, loadingStep, sceneGraph, error, prompt } =
     useSceneStore();
   const [localInput, setLocalInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -20,7 +21,7 @@ export function PromptInput() {
 
   const handleExplore = () => {
     if (isLoading) return;
-    loadDemoScene(DEV_SCENE_KEY);
+    void loadWorldById(DEV_WORLD_ID, DEV_SCENE_LABEL);
   };
 
   // ── Compact top bar after a scene is loaded ──────────────────────────────
@@ -70,7 +71,7 @@ export function PromptInput() {
           <div className="atlas-demo-row">
             <button
               className="atlas-demo-btn"
-              onClick={() => loadDemoScene(DEV_SCENE_KEY)}
+              onClick={() => void loadWorldById(DEV_WORLD_ID, DEV_SCENE_LABEL)}
               disabled={isLoading}
             >
               {DEV_SCENE_LABEL}
@@ -90,7 +91,7 @@ export function PromptInput() {
             value={localInput}
             onChange={(e) => setLocalInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleExplore()}
-            placeholder="Han Dynasty Village (dev scene)"
+            placeholder="Han Dynasty Village (World Labs demo)"
             disabled={isLoading}
             autoComplete="off"
           />

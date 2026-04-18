@@ -1,4 +1,4 @@
-import type { PromptInterpretation, SceneGraph, SceneElement } from './types';
+import type { PromptInterpretation, SceneGraph, SceneElement, MarbleOperation, MarbleWorld } from './types';
 import { getMockInterpretation, getMockScene, getMockChatResponse } from './mockData';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
@@ -70,7 +70,32 @@ export async function sendChat(
   }
 }
 
-export async function checkHealth(): Promise<{ status: string; aiEnabled: boolean; offline: boolean }> {
+export async function generateWorld(
+  prompt: string,
+  model: string = 'marble-1.1'
+): Promise<MarbleOperation> {
+  return post('/api/worlds/generate', { prompt, model });
+}
+
+export async function getWorldOperation(operationId: string): Promise<MarbleOperation> {
+  const res = await fetch(`${BASE_URL}/api/worlds/operations/${operationId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Operation request failed');
+  }
+  return res.json();
+}
+
+export async function getWorld(worldId: string): Promise<MarbleWorld> {
+  const res = await fetch(`${BASE_URL}/api/worlds/${worldId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'World request failed');
+  }
+  return res.json();
+}
+
+export async function checkHealth(): Promise<{ status: string; aiEnabled: boolean; worldLabsEnabled: boolean; offline: boolean }> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2000);
@@ -78,9 +103,9 @@ export async function checkHealth(): Promise<{ status: string; aiEnabled: boolea
     clearTimeout(timer);
     const data = await res.json();
     backendStatus = 'online';
-    return { ...data, offline: false };
+    return { ...data, worldLabsEnabled: !!data.worldLabsEnabled, offline: false };
   } catch {
     backendStatus = 'offline';
-    return { status: 'offline', aiEnabled: false, offline: true };
+    return { status: 'offline', aiEnabled: false, worldLabsEnabled: false, offline: true };
   }
 }

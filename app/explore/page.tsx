@@ -10,13 +10,19 @@ import '@/styles/atlas.css';
 
 export default function ExplorePage() {
   const { setBackendOnline, sceneGraph } = useSceneStore();
-  const [mode, setMode] = useState<'checking' | 'live' | 'demo'>('checking');
+  const [mode, setMode] = useState<'checking' | 'live' | 'backend_only' | 'offline'>('checking');
 
   useEffect(() => {
     checkHealth().then((h) => {
       const online = h.status === 'ok';
       setBackendOnline(online);
-      setMode(online ? 'live' : 'demo');
+      if (!online) {
+        setMode('offline');
+      } else if (h.worldLabsEnabled) {
+        setMode('live');
+      } else {
+        setMode('backend_only');
+      }
     });
   }, [setBackendOnline]);
 
@@ -24,7 +30,9 @@ export default function ExplorePage() {
     <div className="atlas-root">
       {mode !== 'checking' && (
         <div className={`atlas-mode-badge atlas-mode-${mode}`}>
-          {mode === 'live' ? '● Backend connected' : '◎ Demo mode — no backend needed'}
+          {mode === 'live' && '● World Labs connected'}
+          {mode === 'backend_only' && '◎ Backend connected, WORLDLABS_API_KEY missing'}
+          {mode === 'offline' && '◎ Backend offline'}
         </div>
       )}
       <PromptInput />

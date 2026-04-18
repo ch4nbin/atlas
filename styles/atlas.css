@@ -18,13 +18,104 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  cursor: crosshair;
+  cursor: default;
 }
 
 .atlas-scene-container canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;
+}
+
+.atlas-world-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.atlas-world-fallback-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  text-align: center;
+  padding: 1.2rem;
+  background:
+    radial-gradient(900px 500px at 20% 20%, rgba(255, 255, 255, 0.42), transparent 72%),
+    linear-gradient(180deg, #c5e3ff 0%, #d3e9ff 46%, #ffd7e9 100%);
+}
+
+.atlas-world-fallback-panel h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: rgba(34, 49, 83, 0.9);
+}
+
+.atlas-world-fallback-panel p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(45, 60, 96, 0.78);
+}
+
+.atlas-world-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.atlas-world-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.atlas-world-meta {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  padding: 0.35rem 0.45rem 0.35rem 0.8rem;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 30px rgba(35, 52, 85, 0.14);
+}
+
+.atlas-world-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(34, 49, 83, 0.86);
+}
+
+.atlas-world-open {
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: #161616;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+}
+
+.atlas-world-open-lg {
+  font-size: 0.82rem;
+  padding: 0.55rem 0.95rem;
+}
+
+.atlas-world-open:hover {
+  background: #090909;
 }
 
 /* Gentle sky bloom over 3D canvas to blend with pink/glass UI */
@@ -70,6 +161,11 @@
   text-transform: uppercase;
   z-index: 1;
   font-weight: 500;
+}
+
+.atlas-scene-error {
+  margin-top: 0.8rem;
+  max-width: 680px;
 }
 
 /* ─── Controls hint ──────────────────────────────────────────────────── */
@@ -760,6 +856,18 @@
 }
 
 .atlas-mode-demo {
+  background: rgba(255, 232, 242, 0.62);
+  border: 1px solid rgba(255, 188, 218, 0.8);
+  color: rgba(129, 40, 78, 0.86);
+}
+
+.atlas-mode-backend_only {
+  background: rgba(255, 245, 214, 0.68);
+  border: 1px solid rgba(242, 209, 132, 0.85);
+  color: rgba(126, 95, 32, 0.9);
+}
+
+.atlas-mode-offline {
   background: rgba(255, 232, 242, 0.62);
   border: 1px solid rgba(255, 188, 218, 0.8);
   color: rgba(129, 40, 78, 0.86);
