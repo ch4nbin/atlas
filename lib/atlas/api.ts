@@ -8,7 +8,8 @@ type WorldLabsAccount = 'default' | 'stem';
 // a successful health check — which runs in the background on page load.
 let backendStatus: 'offline' | 'online' = 'offline';
 
-async function post<T>(path: string, body: unknown, timeoutMs: number = 1500): Promise<T> {
+<<<<<<< HEAD
+async function post<T>(path: string, body: unknown, timeoutMs = 1500): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -60,15 +61,18 @@ export async function sendChat(
   focusedElement: SceneElement | null,
   question: string
 ): Promise<string> {
-  if (backendStatus === 'offline') return getMockChatResponse(question, focusedElement, sceneGraph);
+  // Always attempt chat even if backendStatus is 'offline' — a prior scene/interpret
+  // failure shouldn't permanently suppress chat. Reset so post() will try.
+  backendStatus = 'online';
   try {
     const { response } = await post<{ response: string }>('/api/chat', {
       sceneGraph,
       focusedElement,
       question,
-    });
+    }, 15000);
     return response;
   } catch {
+    backendStatus = 'online';
     return getMockChatResponse(question, focusedElement, sceneGraph);
   }
 }

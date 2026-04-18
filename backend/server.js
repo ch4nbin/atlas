@@ -28,7 +28,8 @@ app.use('/api/worlds', worldsRouter);
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
-    aiEnabled: !!process.env.OPENAI_API_KEY,
+    aiEnabled: !!process.env.GEMINI_API_KEY,
+    aiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
     worldLabsEnabled: !!process.env.WORLDLABS_API_KEY,
     timestamp: new Date().toISOString(),
   });
@@ -37,7 +38,9 @@ app.get('/api/health', (_req, res) => {
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
 app.listen(PORT, () => {
-  const openAiStatus = process.env.OPENAI_API_KEY ? 'OpenAI enabled' : 'OpenAI disabled';
+  const geminiStatus = process.env.GEMINI_API_KEY
+    ? `Gemini enabled (${process.env.GEMINI_MODEL || 'gemini-2.5-flash'})`
+    : 'Gemini disabled (mock mode)';
   const worldLabsStatus = process.env.WORLDLABS_API_KEY ? 'World Labs enabled' : 'World Labs disabled';
-  console.log(`Atlas backend on http://localhost:${PORT} — ${openAiStatus}, ${worldLabsStatus}`);
+  console.log(`Atlas backend on http://localhost:${PORT} — ${geminiStatus}, ${worldLabsStatus}`);
 });

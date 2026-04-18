@@ -2,28 +2,26 @@
 
 const { findMatchingScene, buildSceneFromInterpretation } = require('./sceneGraph');
 
-let openaiClient = null;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+let geminiClient = null;
 
-function getOpenAI() {
-  if (!process.env.OPENAI_API_KEY) return null;
-  if (!openaiClient) {
-    const { default: OpenAI } = require('openai');
-    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getGemini() {
+  if (!process.env.GEMINI_API_KEY) return null;
+  if (!geminiClient) {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
-  return openaiClient;
+  return geminiClient;
 }
 
 async function interpretPrompt(prompt) {
-  const openai = getOpenAI();
+  const genAI = getGemini();
 
-  if (openai) {
+  if (genAI) {
     try {
-      const res = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an educational 3D scene interpreter for humanities and STEM prompts. Given a user prompt, return ONLY valid JSON matching this schema:
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        systemInstruction: `You are an educational 3D scene interpreter for humanities and STEM prompts. Given a user prompt, return ONLY valid JSON matching this schema:
 {
   "prompt_type": "place | event | ambiguous",
   "resolved_scene": {
@@ -35,15 +33,12 @@ async function interpretPrompt(prompt) {
   "assumptions": []
 }
 Be concise. If the prompt is ambiguous, choose the most educational interpretation.`,
-          },
-          { role: 'user', content: prompt },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 300,
+        generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 300 },
       });
-      return JSON.parse(res.choices[0].message.content);
+      const result = await model.generateContent(prompt);
+      return JSON.parse(result.response.text());
     } catch (err) {
-      console.error('OpenAI interpret error:', err.message);
+      console.error('Gemini interpret error:', err.message);
     }
   }
 
@@ -51,19 +46,16 @@ Be concise. If the prompt is ambiguous, choose the most educational interpretati
 }
 
 async function generateSceneGraph(interpretation, prompt) {
-  const openai = getOpenAI();
+  const genAI = getGemini();
 
   const matchedScene = findMatchingScene(prompt || '');
   if (matchedScene) return matchedScene;
 
-  if (openai) {
+  if (genAI) {
     try {
-      const res = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an educational scene designer. Generate a bounded 3D scene graph from the given interpretation. Return ONLY valid JSON:
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        systemInstruction: `You are an educational scene designer. Generate a bounded 3D scene graph from the given interpretation. Return ONLY valid JSON:
 {
   "setting": { "location": "", "time_period": "", "time_of_day": "" },
   "scene_type": "",
@@ -84,18 +76,14 @@ Rules:
 - Use specific spatial hints (e.g. "foreground left", "center background", "right side mid-distance")
 - Elements must be domain-accurate (historical for humanities prompts, scientifically accurate for STEM prompts)
 - Scene represents a single bounded moment in time`,
-          },
-          {
-            role: 'user',
-            content: `Generate scene graph for: ${JSON.stringify(interpretation)}`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 800,
+        generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 800 },
       });
-      return JSON.parse(res.choices[0].message.content);
+      const result = await model.generateContent(
+        `Generate scene graph for: ${JSON.stringify(interpretation)}`
+      );
+      return JSON.parse(result.response.text());
     } catch (err) {
-      console.error('OpenAI scene error:', err.message);
+      console.error('Gemini scene error:', err.message);
     }
   }
 
@@ -103,33 +91,34 @@ Rules:
 }
 
 async function generateChatResponse(sceneGraph, focusedElement, question) {
-  const openai = getOpenAI();
+  const genAI = getGemini();
 
   const sceneContext = buildSceneContext(sceneGraph, focusedElement);
 
-  if (openai) {
+  if (genAI) {
     try {
-      const res = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert educational guide for an immersive 3D scene.
-Scene context: ${sceneContext}
-Rules:
-- Answer in 1-3 sentences only
-- Only reference elements present in the scene
-- Be accurate and specific for the scene domain (history or science)
-- If asked about a focused element, prioritize that in your answer
-- Never hallucinate objects or people not mentioned in the scene`,
-          },
-          { role: 'user', content: question },
-        ],
-        max_tokens: 200,
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        systemInstruction: `You are an expert educational guide embedded inside an immersive 3D scene. Your role is to bring the scene to life for the user exploring it.
+
+Scene context:
+${sceneContext}
+
+Guidelines:
+- Match response length to the question. A simple greeting or casual question warrants 1 sentence. A deeper question warrants 2 to 3 sentences. Never pad or over-explain.
+- Draw on domain-accurate detail: historical details for humanities scenes and scientifically accurate details for STEM scenes
+- Always ground your answer in the scene elements provided; never invent people or objects not listed
+- When a focused element is provided, make it the center of your answer
+- If the user asks something outside this scene, briefly redirect to the scene in one sentence
+- Speak in present tense as if the user is standing inside the scene right now
+- Be specific and vivid — no filler or generic statements
+- Do not use bullet points or headers; respond in natural flowing prose`,
+        generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
       });
-      return res.choices[0].message.content;
+      const result = await model.generateContent(question);
+      return result.response.text().trim();
     } catch (err) {
-      console.error('OpenAI chat error:', err.message);
+      console.error('Gemini chat error:', err.message);
     }
   }
 
@@ -145,7 +134,9 @@ function buildSceneContext(sceneGraph, focusedElement) {
     `Elements present: ${elements.map((e) => e.name).join(', ')}`,
   ];
   if (focusedElement) {
-    lines.push(`User is currently looking at: ${focusedElement.name} — ${focusedElement.description}`);
+    lines.push(
+      `User is currently looking at: ${focusedElement.name} — ${focusedElement.description}`
+    );
   }
   return lines.join('\n');
 }
@@ -211,9 +202,7 @@ function mockChatResponse(sceneGraph, focusedElement, question) {
   }
   if (q.includes('who') || q.includes('people')) {
     const actors = sceneGraph.elements.filter((e) => e.type === 'actor');
-    if (actors.length > 0) {
-      return `${actors[0].name}: ${actors[0].description}`;
-    }
+    if (actors.length > 0) return `${actors[0].name}: ${actors[0].description}`;
     return `This scene from ${setting.time_period} would have been populated by people typical of the era and location.`;
   }
 
