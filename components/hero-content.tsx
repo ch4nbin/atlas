@@ -10,18 +10,6 @@ export default function HeroContent({ onHowItWorks }: HeroContentProps) {
   return (
     <main className="absolute top-24 left-1/2 -translate-x-1/2 z-20 w-[92vw] max-w-2xl px-4">
       <div className="text-center">
-        <div
-          className="inline-flex items-center px-4 py-1.5 rounded-full border border-white/45 bg-white/18 backdrop-blur-xl mb-4 relative shadow-[0_8px_20px_rgba(20,20,20,0.08)]"
-          style={{
-            filter: "url(#glass-effect)",
-          }}
-        >
-          <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent rounded-full" />
-          <span className="text-black/70 text-xs sm:text-sm font-medium relative z-10 tracking-[0.01em]">
-            AI-Powered Immersive Learning
-          </span>
-        </div>
-
         <h1 className="text-5xl md:text-6xl md:leading-[1.08] tracking-tight font-light text-black/85 mb-4">
           <span className="font-medium italic instrument text-black/90">Step Into</span> History
           <br />
