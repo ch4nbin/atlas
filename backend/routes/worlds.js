@@ -8,7 +8,12 @@ const WORLDLABS_BASE_URL = 'https://api.worldlabs.ai/marble/v1';
 function getWorldLabsApiKey(account = 'default') {
   const normalized = String(account || 'default').toLowerCase();
   if (normalized === 'stem') {
-    return process.env.WORLDLABS_STEM_API_KEY || null;
+    // Prefer a dedicated STEM key; fall back to the default Marble key for local dev.
+    return (
+      process.env.WORLDLABS_STEM_API_KEY ||
+      process.env.WORLDLABS_API_KEY ||
+      null
+    );
   }
   return process.env.WORLDLABS_API_KEY || null;
 }
@@ -18,7 +23,7 @@ async function worldLabsRequest(path, init = {}, account = 'default') {
   if (!apiKey) {
     const err = new Error(
       account === 'stem'
-        ? 'WORLDLABS_STEM_API_KEY is not configured on the backend'
+        ? 'WORLDLABS_STEM_API_KEY (or WORLDLABS_API_KEY) is not configured on the backend'
         : 'WORLDLABS_API_KEY is not configured on the backend'
     );
     err.status = 503;
