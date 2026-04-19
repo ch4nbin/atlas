@@ -6,7 +6,7 @@ import type {
   MarbleWorld,
   StemExperimentState,
 } from './types';
-import { getMockInterpretation, getMockScene, getMockChatResponse } from './mockData';
+import { getMockInterpretation, getMockScene } from './mockData';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 type WorldLabsAccount = 'default' | 'stem' | 'humanities';
@@ -81,9 +81,9 @@ export async function sendChat(
       history,
     }, 15000);
     return response;
-  } catch {
+  } catch (err) {
     backendStatus = 'online';
-    return getMockChatResponse(question, focusedElement, sceneGraph);
+    throw err;
   }
 }
 

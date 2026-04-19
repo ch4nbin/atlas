@@ -8,7 +8,7 @@ import type {
   StemExperimentState,
 } from '@/lib/atlas/types';
 import { generateWorld, getWorld, getWorldOperation, sendChat } from '@/lib/atlas/api';
-import { getMockScene, getMockChatResponse } from '@/lib/atlas/mockData';
+import { getMockScene } from '@/lib/atlas/mockData';
 
 type WorldLabsAccount = 'default' | 'stem' | 'humanities';
 const STEM_STEP_ORDER = [
@@ -381,12 +381,15 @@ export const useSceneStore = create<SceneState>((set, get) => ({
           { id: makeId(), role: 'assistant', content: response, timestamp: Date.now() },
         ],
       }));
-    } catch {
-      const fallback = getMockChatResponse(msg, focusedElement, sceneGraph);
+    } catch (err: unknown) {
+      const failureMsg =
+        err instanceof Error && err.message
+          ? `Chat unavailable: ${sanitizeErrorMessage(err.message)}`
+          : 'Chat unavailable: Gemini/backend is currently unavailable.';
       set((s) => ({
         chatHistory: [
           ...s.chatHistory,
-          { id: makeId(), role: 'assistant', content: fallback, timestamp: Date.now() },
+          { id: makeId(), role: 'assistant', content: failureMsg, timestamp: Date.now() },
         ],
       }));
     } finally {

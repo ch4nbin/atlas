@@ -97,11 +97,14 @@ async function generateChatResponse(sceneGraph, focusedElement, question, option
 
   const sceneContext = buildSceneContext(sceneGraph, focusedElement, experimentState);
 
-  if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
-        systemInstruction: `You are an expert educational guide embedded inside an immersive 3D scene. Your role is to bring the scene to life for the user exploring it.
+  if (!genAI) {
+    throw new Error('Gemini chat unavailable: GEMINI_API_KEY is not configured');
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      systemInstruction: `You are an expert educational guide embedded inside an immersive 3D scene. Your role is to bring the scene to life for the user exploring it.
 
 Scene context:
 ${sceneContext}
@@ -119,27 +122,25 @@ Guidelines:
 - NEVER start a response with "Welcome to..." — you have already greeted the user
 - If the user's message is vague or unclear, ask a natural clarifying question rather than defaulting to a scene introduction
 - Use the conversation history to understand follow-up questions and references like "that", "it", "explain more", "simpler"`,
-        generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
-      });
+      generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
+    });
 
-      // Build prior turns — Gemini requires history to start with a user turn,
-      // so drop any leading assistant messages (e.g. the welcome message).
-      const allTurns = history.filter((m) => m.role === 'user' || m.role === 'assistant');
-      const firstUserIdx = allTurns.findIndex((m) => m.role === 'user');
-      const priorTurns = (firstUserIdx === -1 ? [] : allTurns.slice(firstUserIdx)).map((m) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-      }));
+    // Build prior turns — Gemini requires history to start with a user turn,
+    // so drop any leading assistant messages (e.g. the welcome message).
+    const allTurns = history.filter((m) => m.role === 'user' || m.role === 'assistant');
+    const firstUserIdx = allTurns.findIndex((m) => m.role === 'user');
+    const priorTurns = (firstUserIdx === -1 ? [] : allTurns.slice(firstUserIdx)).map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
 
-      const chat = model.startChat({ history: priorTurns });
-      const result = await chat.sendMessage(question);
-      return result.response.text().trim();
-    } catch (err) {
-      console.error('Gemini chat error:', err.message);
-    }
+    const chat = model.startChat({ history: priorTurns });
+    const result = await chat.sendMessage(question);
+    return result.response.text().trim();
+  } catch (err) {
+    console.error('Gemini chat error:', err.message);
+    throw err;
   }
-
-  return mockChatResponse(sceneGraph, focusedElement, question, experimentState);
 }
 
 function buildSceneContext(sceneGraph, focusedElement, experimentState) {
