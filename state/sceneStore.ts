@@ -10,7 +10,7 @@ import type {
 import { generateWorld, getWorld, getWorldOperation, sendChat } from '@/lib/atlas/api';
 import { getMockScene, getMockChatResponse } from '@/lib/atlas/mockData';
 
-type WorldLabsAccount = 'default' | 'stem';
+type WorldLabsAccount = 'default' | 'stem' | 'humanities';
 const STEM_STEP_ORDER = [
   { id: 'sunlight_lamp', label: 'Sunlight Simulation Lamp' },
   { id: 'water_channel', label: 'Water Transport Channel' },
@@ -161,7 +161,6 @@ export const useSceneStore = create<SceneState>((set, get) => ({
 
   loadWorldById: async (worldId: string, label?: string, options?: { account?: WorldLabsAccount }) => {
     const account = options?.account || 'default';
-    let usedFallback = false;
     set({
       isLoading: true,
       error: null,
@@ -197,16 +196,9 @@ export const useSceneStore = create<SceneState>((set, get) => ({
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      if (msg.includes('World not found') && label) {
-        usedFallback = true;
-        await get().loadScene(label);
-        return;
-      }
       set({ error: sanitizeErrorMessage(msg) });
     } finally {
-      if (!usedFallback) {
-        set({ isLoading: false, loadingStep: '' });
-      }
+      set({ isLoading: false, loadingStep: '' });
     }
   },
 

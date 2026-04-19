@@ -204,6 +204,8 @@ export function SceneViewer() {
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2(2, 2);
         const hotspotMeshes: any[] = [];
+        const objectiveHitMeshes: any[] = [];
+        const objectiveRootByElementId = new Map<string, any>();
         const hotspotByUuid = new Map<string, SceneElement>();
         let focusedUuid: string | null = null;
         let lastMouseX = 0;
@@ -247,21 +249,117 @@ export function SceneViewer() {
         const hotspotMaterial = new THREE.MeshBasicMaterial({
           color: 0xff6ea9,
           transparent: true,
-          opacity: 0.08,
+          opacity: isStemExperimentScene ? 0.0 : 0.08,
           depthWrite: false,
         });
+
+        const STEM_OBJECTIVE_POSITIONS: Record<string, [number, number, number]> = {
+          // Debug cluster: keep all objectives near flower anchor (0, -0.68, -0.9).
+          sunlight_lamp: [-0.92, -0.2, 0.25],
+          water_channel: [0.9, -0.2, -0.15],
+          stomata_gate: [-0.96, -0.2, -2.25],
+          chloroplast_core: [0.0, -0.14, -1.25],
+          glucose_meter: [0.96, -0.2, -2.55],
+        };
+
+        const STEM_DEBUG_CLUSTER_POSITIONS: [number, number, number][] = [
+          [-0.92, -0.2, 0.25],
+          [0.9, -0.2, -0.15],
+          [-0.96, -0.2, -2.25],
+          [0.0, -0.14, -1.25],
+          [0.96, -0.2, -2.55],
+          [0.0, -0.2, 0.65],
+          [-1.16, -0.2, -1.75],
+          [1.16, -0.2, -1.95],
+        ];
+
+        const makeObjectiveProp = (id: string, THREERef: any) => {
+          const g = new THREERef.Group();
+          if (id === 'sunlight_lamp') {
+            const orb = new THREERef.Mesh(
+              new THREERef.SphereGeometry(0.15, 16, 16),
+              new THREERef.MeshBasicMaterial({ color: 0xffe27a })
+            );
+            const ring = new THREERef.Mesh(
+              new THREERef.TorusGeometry(0.21, 0.03, 12, 24),
+              new THREERef.MeshBasicMaterial({ color: 0xfff2bf, transparent: true, opacity: 0.9 })
+            );
+            ring.rotation.x = Math.PI / 2;
+            g.add(orb, ring);
+          } else if (id === 'water_channel') {
+            const drop = new THREERef.Mesh(
+              new THREERef.SphereGeometry(0.13, 14, 14),
+              new THREERef.MeshBasicMaterial({ color: 0x6ecbff })
+            );
+            drop.scale.set(0.9, 1.15, 0.9);
+            g.add(drop);
+          } else if (id === 'stomata_gate') {
+            const ring = new THREERef.Mesh(
+              new THREERef.TorusGeometry(0.17, 0.04, 10, 22),
+              new THREERef.MeshBasicMaterial({ color: 0x9df0b5 })
+            );
+            const core = new THREERef.Mesh(
+              new THREERef.SphereGeometry(0.07, 12, 12),
+              new THREERef.MeshBasicMaterial({ color: 0xc9ffd7 })
+            );
+            g.add(ring, core);
+          } else if (id === 'chloroplast_core') {
+            const core = new THREERef.Mesh(
+              new THREERef.IcosahedronGeometry(0.14, 0),
+              new THREERef.MeshBasicMaterial({ color: 0x79d98d })
+            );
+            g.add(core);
+          } else if (id === 'glucose_meter') {
+            const cube = new THREERef.Mesh(
+              new THREERef.BoxGeometry(0.2, 0.2, 0.2),
+              new THREERef.MeshBasicMaterial({ color: 0xffc877 })
+            );
+            cube.rotation.set(0.3, 0.6, 0.15);
+            g.add(cube);
+          } else {
+            const marker = new THREERef.Mesh(
+              new THREERef.SphereGeometry(0.11, 14, 14),
+              new THREERef.MeshBasicMaterial({ color: 0xff9ec2, transparent: true, opacity: 0.95 })
+            );
+            g.add(marker);
+          }
+          return g;
+        };
 
         if (sceneGraph?.elements?.length) {
           sceneGraph.elements.forEach((el, i) => {
             const [x, y, z] = parsePositionHint(el.position_hint, i, sceneGraph.elements.length);
+            const debugClusterPos = STEM_DEBUG_CLUSTER_POSITIONS[i % STEM_DEBUG_CLUSTER_POSITIONS.length];
+            const objectivePos = isStemExperimentScene
+              ? (STEM_OBJECTIVE_POSITIONS[el.id] || debugClusterPos)
+              : null;
+            const hx = objectivePos ? objectivePos[0] : x;
+            const hy = objectivePos ? objectivePos[1] : y + 1.2;
+            const hz = objectivePos ? objectivePos[2] : z;
             const hotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial.clone());
-            hotspot.position.set(x, y + 1.2, z);
+            hotspot.position.set(hx, hy, hz);
             hotspot.name = el.name;
             hotspot.userData.elementId = el.id;
             hotspot.userData.baseScale = 1;
             hotspotMeshes.push(hotspot);
             hotspotByUuid.set(hotspot.uuid, el);
             scene.add(hotspot);
+
+            if (isStemExperimentScene) {
+              const objectiveProp = makeObjectiveProp(el.id, THREE);
+              if (objectiveProp) {
+                objectiveProp.position.set(hx, hy - 0.05, hz);
+                objectiveProp.userData.elementId = el.id;
+                objectiveRootByElementId.set(el.id, objectiveProp);
+                scene.add(objectiveProp);
+                objectiveProp.traverse((n: any) => {
+                  if (n.isMesh) {
+                    objectiveHitMeshes.push(n);
+                    hotspotByUuid.set(n.uuid, el);
+                  }
+                });
+              }
+            }
           });
         }
 
@@ -280,6 +378,11 @@ export function SceneViewer() {
 
         const pickHotspot = () => {
           raycaster.setFromCamera(pointer, camera);
+          const objectiveHits = raycaster.intersectObjects(objectiveHitMeshes, false);
+          if (objectiveHits.length) {
+            const picked = objectiveHits[0].object;
+            return hotspotByUuid.get(picked.uuid) || null;
+          }
           const hits = raycaster.intersectObjects(hotspotMeshes, false);
           if (!hits.length) return null;
           const picked = hits[0].object;
@@ -422,8 +525,12 @@ export function SceneViewer() {
               const mat = m.material as any;
               const isFocused = m.uuid === focusedUuid;
               const isTarget = nextTargetId && m.userData.elementId === nextTargetId;
-              mat.opacity = isTarget ? 0.3 : isFocused ? 0.22 : 0.08;
-              mat.color.copy(isTarget ? targetColor : isFocused ? focusedColor : idleColor);
+              if (isStemExperimentScene) {
+                mat.opacity = 0;
+              } else {
+                mat.opacity = isTarget ? 0.3 : isFocused ? 0.22 : 0.08;
+                mat.color.copy(isTarget ? targetColor : isFocused ? focusedColor : idleColor);
+              }
             });
             return;
           }
@@ -439,8 +546,12 @@ export function SceneViewer() {
             const isPicked = m.userData.elementId === picked.id;
             const isFocused = m.uuid === focusedUuid;
             const isTarget = nextTargetId && m.userData.elementId === nextTargetId;
-            mat.opacity = isPicked ? 0.28 : isTarget ? 0.3 : isFocused ? 0.22 : 0.08;
-            mat.color.copy(isPicked ? hoverColor : isTarget ? targetColor : isFocused ? focusedColor : idleColor);
+            if (isStemExperimentScene) {
+              mat.opacity = 0;
+            } else {
+              mat.opacity = isPicked ? 0.28 : isTarget ? 0.3 : isFocused ? 0.22 : 0.08;
+              mat.color.copy(isPicked ? hoverColor : isTarget ? targetColor : isFocused ? focusedColor : idleColor);
+            }
           });
         };
 
@@ -517,8 +628,17 @@ export function SceneViewer() {
             if (isTarget) targetMesh = m;
           });
 
-          if (targetMesh) {
-            const projected = targetMesh.position.clone().project(camera);
+          objectiveRootByElementId.forEach((root, elementId) => {
+            const isTarget = !!nextTargetId && elementId === nextTargetId;
+            root.scale.setScalar(isTarget ? 1.1 * pulse : 1);
+            root.rotation.y += delta * (isTarget ? 0.9 : 0.25);
+          });
+
+          const targetObjective = nextTargetId ? objectiveRootByElementId.get(nextTargetId) : null;
+          const labelAnchor = targetObjective || targetMesh;
+
+          if (labelAnchor) {
+            const projected = labelAnchor.position.clone().project(camera);
             const x = (projected.x * 0.5 + 0.5) * container.clientWidth;
             const y = (-projected.y * 0.5 + 0.5) * container.clientHeight;
             targetHint.textContent = `Activate: ${nextTargetLabel}`;
@@ -526,12 +646,8 @@ export function SceneViewer() {
             targetHint.style.top = `${Math.max(24, y - 26)}px`;
             targetHint.style.display = 'block';
 
-            targetBeacon.visible = true;
-            targetBeacon.position.copy(targetMesh.position);
-            targetBeacon.position.y += 0.42;
-            const beaconMat = targetBeacon.material as any;
-            beaconMat.opacity = 0.3 + Math.sin(performance.now() * 0.01) * 0.12;
-            targetBeacon.scale.setScalar(0.9 + Math.sin(performance.now() * 0.01) * 0.15);
+            // Keep one guidance marker style: objective pulse + label.
+            targetBeacon.visible = false;
           } else {
             targetHint.style.display = 'none';
             targetBeacon.visible = false;

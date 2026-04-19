@@ -24,6 +24,7 @@ interface MapData {
   id: string;
   title: string;
   track: 'humanities' | 'stem';
+  account?: 'default' | 'stem' | 'humanities';
   icon: string;
   previewImage: string;
   shortDescription: string;
@@ -71,11 +72,12 @@ const LIBRARY_MAPS: MapData[] = [
     id: 'medieval-castle',
     title: 'Medieval Castle',
     track: 'humanities',
+    account: 'humanities',
     icon: '🏰',
     previewImage: '🏰',
     shortDescription: 'Norman motte-and-bailey, England 1150 CE.',
     longDescription: 'Explore a Norman castle complex — great hall, chapel, armory, and bailey market — as it would have appeared in the mid-twelfth century. The historical guide covers feudal obligations, medieval warfare, and how castle design evolved from motte-and-bailey to stone keeps.',
-    worldId: '7e486a4a-abe4-4505-b9d9-923ec54ac10b',
+    worldId: '7dedbd85-3dbd-49b3-8750-9280aaca1da5',
     sceneLabel: 'Medieval Castle',
   },
   {
@@ -137,11 +139,12 @@ const LIBRARY_MAPS: MapData[] = [
     id: 'japanese-edo',
     title: 'Japanese Edo Period',
     track: 'humanities',
+    account: 'humanities',
     icon: '⛩️',
     previewImage: '⛩️',
     shortDescription: 'Edo city life, Japan 1700 CE.',
     longDescription: 'Explore the streets of Edo (modern-day Tokyo) during the Tokugawa shogunate. Visit a kabuki theatre, a woodblock print workshop, a samurai estate, and a merchant quarter in the shitamachi district. Your guide explains the four-estate caste system, sakoku isolation policy, the rise of ukiyo-e art, and how peace transformed a warrior culture.',
-    worldId: '7e486a4a-abe4-4505-b9d9-923ec54ac10b',
+    worldId: '6396d2c0-d8be-448d-9a5f-2ca643e10a3c',
     sceneLabel: 'Japanese Edo Period',
   },
   // ── STEM ────────────────────────────────────────────────────────────────
@@ -282,9 +285,13 @@ export function PromptInput() {
     launchBtnRef.current?.focus();
   }, [hasScene, trackView]);
 
-  const handleStartHumanities = (worldId: string = HUMANITIES_TRACK.worldId, label: string = HUMANITIES_TRACK.sceneLabel) => {
+  const handleStartHumanities = (
+    worldId: string = HUMANITIES_TRACK.worldId,
+    label: string = HUMANITIES_TRACK.sceneLabel,
+    account: 'default' | 'humanities' = 'default'
+  ) => {
     if (isLoading) return;
-    void loadWorldById(worldId, label);
+    void loadWorldById(worldId, label, { account });
   };
 
   const handleStartStem = (worldId: string = STEM_TRACK.worldId, label: string = STEM_TRACK.sceneLabel) => {
@@ -293,7 +300,7 @@ export function PromptInput() {
   };
 
   const handleEnterMap = (map: MapData) => {
-    if (map.track === 'humanities') handleStartHumanities(map.worldId, map.sceneLabel);
+    if (map.track === 'humanities') handleStartHumanities(map.worldId, map.sceneLabel, map.account === 'humanities' ? 'humanities' : 'default');
     else handleStartStem(map.worldId, map.sceneLabel);
   };
 
