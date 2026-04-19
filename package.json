@@ -7,6 +7,7 @@
     "dev": "rm -rf .next && next dev",
     "dev:backend": "cd backend && npm run dev",
     "dev:all": "concurrently -n frontend,backend -c cyan,yellow \"npm run dev\" \"npm run dev:backend\"",
+    "agent:imessage": "node --env-file=backend/.env agent/spectrum-imessage.mjs",
     "backend:install": "cd backend && npm install",
     "lint": "eslint .",
     "start": "next start"
@@ -64,6 +65,7 @@
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.4",
     "sonner": "^1.7.4",
+    "spectrum-ts": "^0.4.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.184.0",
