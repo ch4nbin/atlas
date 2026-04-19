@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { SceneViewer } from '@/components/atlas/SceneViewer';
 import { PromptInput } from '@/components/atlas/PromptInput';
 import { AuroraBackground } from '@/components/atlas/AuroraBackground';
@@ -12,7 +11,6 @@ import '@/styles/atlas.css';
 export default function ExplorePage() {
   const { setBackendOnline, loadWorldById } = useSceneStore();
   const [mode, setMode] = useState<'checking' | 'live' | 'backend_only' | 'offline'>('checking');
-  const searchParams = useSearchParams();
   const hydratedFromQuery = useRef(false);
 
   useEffect(() => {
@@ -27,6 +25,7 @@ export default function ExplorePage() {
 
   useEffect(() => {
     if (hydratedFromQuery.current) return;
+    const searchParams = new URLSearchParams(window.location.search);
     const worldId = searchParams.get('worldId');
     if (!worldId) return;
     const label = searchParams.get('label') || undefined;
@@ -37,7 +36,7 @@ export default function ExplorePage() {
         : 'default';
     hydratedFromQuery.current = true;
     void loadWorldById(worldId, label, { account });
-  }, [loadWorldById, searchParams]);
+  }, [loadWorldById]);
 
   return (
     <div className="atlas-root">
