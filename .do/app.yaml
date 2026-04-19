@@ -19,7 +19,7 @@ services:
       repo: ch4nbin/atlas   # ← replace with your repo
       branch: main
       deploy_on_push: true
-    build_command: npm ci && npm run build
+    build_command: npm install -g npm@latest && npm ci && npm run build
     run_command: npm start
     environment_slug: node-js
     instance_size_slug: apps-s-1vcpu-1gb
