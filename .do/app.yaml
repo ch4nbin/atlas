@@ -1,0 +1,74 @@
+# DigitalOcean App Platform spec
+# Deploy: doctl apps create --spec .do/app.yaml
+# Docs:   https://docs.digitalocean.com/products/app-platform/reference/app-spec/
+#
+# Before deploying, replace the github.repo value below with your own
+# (e.g. "your-github-username/atlas") and push this file to your main branch.
+#
+# Secrets (WORLDLABS_* and GEMINI_API_KEY) must be set in the DO dashboard
+# or via: doctl apps update <app-id> --spec .do/app.yaml
+# after replacing the PLACEHOLDER values.
+
+name: atlas
+
+services:
+  # ── Frontend (Next.js) ────────────────────────────────────────────────────
+  - name: web
+    source_dir: /
+    github:
+      repo: ch4nbin/atlas   # ← replace with your repo
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci --legacy-peer-deps && npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+    routes:
+      - path: /
+    envs:
+      - key: NODE_ENV
+        value: production
+      # Empty string makes api.ts use relative paths (/api/...) → same domain,
+      # routed to the backend service below. Do not change this value.
+      - key: NEXT_PUBLIC_BACKEND_URL
+        value: ""
+
+  # ── Backend (Express) ─────────────────────────────────────────────────────
+  - name: backend
+    source_dir: /backend
+    github:
+      repo: ch4nbin/atlas   # ← replace with your repo
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci
+    run_command: node server.js
+    environment_slug: node-js
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+    routes:
+      - path: /api
+    envs:
+      - key: NODE_ENV
+        value: production
+      # Allows CORS from the frontend (same app domain in production)
+      - key: FRONTEND_URL
+        value: ${web.PUBLIC_URL}
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+
+      # ── Secrets ────────────────────────────────────────────────────────────
+      # Replace each PLACEHOLDER with your real value in the DO dashboard
+      # (App → Settings → Environment Variables) or via doctl before deploying.
+      - key: WORLDLABS_API_KEY
+        type: SECRET
+        value: PLACEHOLDER
+      - key: WORLDLABS_STEM_API_KEY
+        type: SECRET
+        value: PLACEHOLDER
+      - key: WORLDLABS_HUMANITIES_API_KEY
+        type: SECRET
+        value: PLACEHOLDER
+      - key: GEMINI_API_KEY
+        type: SECRET
+        value: PLACEHOLDER

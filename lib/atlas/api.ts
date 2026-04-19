@@ -8,7 +8,7 @@ import type {
 } from './types';
 import { getMockInterpretation, getMockScene } from './mockData';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:3001';
 type WorldLabsAccount = 'default' | 'stem' | 'humanities';
 
 // Start offline so first button press is instant. Flip to 'online' only after
