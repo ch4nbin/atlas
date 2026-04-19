@@ -176,15 +176,9 @@ function findClosestWorld(query: string): MapData {
   return scores[0].map;
 }
 
-/* ─── Props ────────────────────────────────────────────────────────── */
-
-interface PromptInputProps {
-  mode: 'checking' | 'live' | 'backend_only' | 'offline';
-}
-
 /* ─── Main component ───────────────────────────────────────────────── */
 
-export function PromptInput({ mode }: PromptInputProps) {
+export function PromptInput() {
   const { loadWorldById, reset, isLoading, loadingStep, sceneGraph, error, prompt } =
     useSceneStore();
   const [showHelp, setShowHelp] = useState(false);
@@ -251,17 +245,37 @@ export function PromptInput({ mode }: PromptInputProps) {
   if (hasScene) {
     return (
       <>
-        <div className="atlas-topbar">
-          <Link href="/" className="atlas-topbar-home">← Home</Link>
-          <Link href="/" className="atlas-topbar-label atlas-home-link" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <img src="/atlas-logo-transparent.png" alt="" aria-hidden="true" style={{ width: '1.1rem', height: '1.1rem', objectFit: 'contain', opacity: 0.75 }} />
-            ATLAS
-          </Link>
-          <button className="atlas-topbar-btn atlas-topbar-btn-secondary" onClick={() => reset()} disabled={isLoading}>
+        <div
+          className="atlas-topbar"
+          style={{
+            background: 'rgba(255,255,255,0.14)',
+            border: '1px solid rgba(255,255,255,0.58)',
+            backdropFilter: 'blur(30px) saturate(1.22)',
+            WebkitBackdropFilter: 'blur(30px) saturate(1.22)',
+            boxShadow: '0 30px 80px rgba(8,10,18,0.45)',
+          }}
+        >
+          <button
+            className="atlas-topbar-btn atlas-topbar-btn-secondary atlas-topbar-back"
+            onClick={() => reset()}
+            disabled={isLoading}
+            aria-label="Back to library"
+          >
             Back
           </button>
-          <input className="atlas-topbar-input" defaultValue={prompt} key={prompt} readOnly disabled />
-          <button className="atlas-topbar-btn atlas-topbar-btn-secondary atlas-topbar-help" onClick={() => setShowHelp(v => !v)} aria-label="Controls">
+          <input
+            className="atlas-topbar-input"
+            defaultValue={prompt}
+            key={prompt}
+            readOnly
+            disabled
+            aria-label="Current world"
+          />
+          <button
+            className="atlas-topbar-btn atlas-topbar-btn-secondary atlas-topbar-help"
+            onClick={() => setShowHelp(v => !v)}
+            aria-label="Controls"
+          >
             ?
           </button>
         </div>
@@ -283,28 +297,6 @@ export function PromptInput({ mode }: PromptInputProps) {
           </div>
         )}
 
-        {mode !== 'checking' && (
-          <div className="atlas-scene-connection-badge">
-            {mode === 'live' && (
-              <>
-                <span className="atlas-scene-connection-dot" style={{ background: '#10b981' }} />
-                <span>World Labs connected</span>
-              </>
-            )}
-            {mode === 'backend_only' && (
-              <>
-                <span className="atlas-scene-connection-dot" style={{ background: '#f59e0b' }} />
-                <span>Backend only</span>
-              </>
-            )}
-            {mode === 'offline' && (
-              <>
-                <span className="atlas-scene-connection-dot" style={{ background: '#f59e0b' }} />
-                <span>Offline</span>
-              </>
-            )}
-          </div>
-        )}
       </>
     );
   }

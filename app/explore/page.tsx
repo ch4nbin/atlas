@@ -25,7 +25,7 @@ export default function ExplorePage() {
   return (
     <div className="atlas-root">
       <AuroraBackground />
-      <PromptInput mode={mode} />
+      <PromptInput />
       <SceneViewer />
     </div>
   );
