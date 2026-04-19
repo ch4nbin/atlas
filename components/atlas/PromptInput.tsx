@@ -493,9 +493,6 @@ export function PromptInput({ mode }: PromptInputProps) {
                   >
                     Enter {selectedMap.title} →
                   </button>
-                  <button className="atlas-map-close-pill atlas-btn-light" onClick={() => setSelectedMap(null)} type="button">
-                    Close
-                  </button>
                 </div>
               </div>
             </div>
