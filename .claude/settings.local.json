@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(convert --version)",
+      "Bash(magick --version)",
+      "Bash(python3 -c \"from PIL import Image; print\\('Pillow available'\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(python3 -c \"from PIL import Image; print\\('Pillow ready'\\)\")",
+      "Bash(python3 *)"
+    ]
+  }
+}

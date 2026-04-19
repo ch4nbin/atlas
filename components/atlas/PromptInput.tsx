@@ -253,7 +253,10 @@ export function PromptInput({ mode }: PromptInputProps) {
       <>
         <div className="atlas-topbar">
           <Link href="/" className="atlas-topbar-home">← Home</Link>
-          <Link href="/" className="atlas-topbar-label atlas-home-link">ATLAS</Link>
+          <Link href="/" className="atlas-topbar-label atlas-home-link" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <img src="/atlas-logo-transparent.png" alt="" aria-hidden="true" style={{ width: '1.1rem', height: '1.1rem', objectFit: 'contain', opacity: 0.75 }} />
+            ATLAS
+          </Link>
           <button className="atlas-topbar-btn atlas-topbar-btn-secondary" onClick={() => reset()} disabled={isLoading}>
             Back
           </button>
@@ -317,7 +320,10 @@ export function PromptInput({ mode }: PromptInputProps) {
           </Link>
           <p className="atlas-header-center">AI-Powered Immersive Learning — Explore</p>
           <nav>
-            <span style={{ fontSize: '0.72rem', color: 'rgba(0,0,0,0.45)', letterSpacing: '0.04em', padding: '0.5rem 0.5rem' }}>Atlas</span>
+            <span style={{ fontSize: '0.72rem', color: 'rgba(0,0,0,0.45)', letterSpacing: '0.04em', padding: '0.5rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <img src="/atlas-logo-transparent.png" alt="" aria-hidden="true" style={{ width: '1.1rem', height: '1.1rem', objectFit: 'contain', opacity: 0.55 }} />
+              Atlas
+            </span>
           </nav>
         </div>
       </header>

@@ -21,9 +21,8 @@ const instrumentSerif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "Atlas",
+  description: "AI-Powered Immersive Learning — step inside history and science.",
 }
 
 export default function RootLayout({

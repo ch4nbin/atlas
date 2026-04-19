@@ -20,7 +20,10 @@ export default function LandingPage() {
           className="atlas-header-pill atlas-glass"
           style={{ maxWidth: '72rem', margin: '0 auto' }}
         >
-          <span className="atlas-header-logo" style={{ textDecoration: 'none' }}>Atlas</span>
+          <span className="atlas-header-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <img src="/atlas-logo-transparent.png" alt="Atlas logo" style={{ width: '1.4rem', height: '1.4rem', objectFit: 'contain' }} />
+            Atlas
+          </span>
           <p className="atlas-header-center">AI-Powered Immersive Learning</p>
           <nav style={{ flexShrink: 0 }}>
             <button
