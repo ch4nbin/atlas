@@ -40,6 +40,7 @@ const cors = require('cors');
 const interpretRouter = require('./routes/interpret');
 const sceneRouter = require('./routes/scene');
 const chatRouter = require('./routes/chat');
+const ttsRouter = require('./routes/tts');
 const assetsRouter = require('./routes/assets');
 const worldsRouter = require('./routes/worlds');
 
@@ -53,6 +54,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/interpret', interpretRouter);
 app.use('/api/scene', sceneRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/tts', ttsRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/worlds', worldsRouter);
 

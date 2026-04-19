@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { generateChatResponse } = require('../services/llm');
+const { generateChatResponse, synthesizeSpeech } = require('../services/llm');
 
 router.post('/', async (req, res) => {
   const { sceneGraph, focusedElement, question, experimentState, history } = req.body;
@@ -21,7 +21,8 @@ router.post('/', async (req, res) => {
       experimentState: experimentState || null,
       history: sanitizedHistory,
     });
-    res.json({ response });
+    const audioBase64 = await synthesizeSpeech(response);
+    res.json({ response, audioBase64: audioBase64 || undefined });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err?.message || 'Chat response failed' });

@@ -68,23 +68,37 @@ export async function sendChat(
   question: string,
   experimentState: StemExperimentState | null = null,
   history: { role: 'user' | 'assistant'; content: string }[] = []
-): Promise<string> {
+): Promise<{ response: string; audioBase64?: string }> {
   // Always attempt chat even if backendStatus is 'offline' — a prior scene/interpret
   // failure shouldn't permanently suppress chat. Reset so post() will try.
   backendStatus = 'online';
   try {
-    const { response } = await post<{ response: string }>('/api/chat', {
+    const data = await post<{ response: string; audioBase64?: string }>('/api/chat', {
       sceneGraph,
       focusedElement,
       question,
       experimentState,
       history,
     }, 15000);
-    return response;
+    return data;
   } catch (err) {
     backendStatus = 'online';
     throw err;
   }
+}
+
+export async function fetchTTS(text: string): Promise<string> {
+  const res = await fetch(`${BASE_URL}/api/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'TTS request failed');
+  }
+  const { audioBase64 } = await res.json();
+  return audioBase64;
 }
 
 export async function generateWorld(

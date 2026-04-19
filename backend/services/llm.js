@@ -247,4 +247,42 @@ function mockChatResponse(sceneGraph, focusedElement, question, experimentState 
   return `This is ${setting.location}, ${setting.time_period}. Look around to explore the scene — click on any object to learn more about it.`;
 }
 
-module.exports = { interpretPrompt, generateSceneGraph, generateChatResponse };
+async function synthesizeSpeech(text) {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  const voiceId = process.env.ELEVENLABS_VOICE_ID;
+  if (!apiKey || !voiceId) {
+    console.warn('[TTS] Skipped: ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID not set');
+    return null;
+  }
+  console.log(`[TTS] Using voice ID: ${voiceId}`);
+
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'audio/mpeg',
+      },
+      body: JSON.stringify({
+        text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error(`[TTS] ElevenLabs error ${res.status}:`, errText);
+      return null;
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer).toString('base64');
+  } catch (err) {
+    console.error('[TTS] ElevenLabs fetch error:', err.message);
+    return null;
+  }
+}
+
+module.exports = { interpretPrompt, generateSceneGraph, generateChatResponse, synthesizeSpeech };

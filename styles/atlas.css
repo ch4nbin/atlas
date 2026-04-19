@@ -1411,6 +1411,41 @@
   box-shadow: 0 8px 22px rgba(191, 95, 142, 0.16);
 }
 
+.atlas-msg-speak {
+  align-self: flex-end;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  color: rgba(223, 87, 149, 0.85);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  margin-bottom: 2px;
+}
+.atlas-msg-speak:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(223, 87, 149, 0.6);
+}
+.atlas-msg-speak--active {
+  background: rgba(223, 87, 149, 0.18);
+  border-color: rgba(223, 87, 149, 0.8);
+  color: rgba(223, 87, 149, 1);
+}
+.atlas-msg-speak--error {
+  border-color: rgba(220, 80, 80, 0.8);
+  color: rgba(220, 80, 80, 1);
+}
+.atlas-msg-speak:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .atlas-typing {
   display: flex;
   gap: 4px;

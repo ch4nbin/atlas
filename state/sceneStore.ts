@@ -371,14 +371,14 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     set((s) => ({ chatHistory: [...s.chatHistory, userMsg], isChatLoading: true }));
 
     try {
-      const response = await sendChat(sceneGraph, focusedElement, msg, stemExperiment, [
+      const { response, audioBase64 } = await sendChat(sceneGraph, focusedElement, msg, stemExperiment, [
         ...chatHistory.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: msg },
       ]);
       set((s) => ({
         chatHistory: [
           ...s.chatHistory,
-          { id: makeId(), role: 'assistant', content: response, timestamp: Date.now() },
+          { id: makeId(), role: 'assistant', content: response, audioBase64, timestamp: Date.now() },
         ],
       }));
     } catch (err: unknown) {

@@ -39,6 +39,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  audioBase64?: string;
 }
 
 export interface StemExperimentState {

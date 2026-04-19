@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSceneStore } from '@/state/sceneStore';
+import { fetchTTS } from '@/lib/atlas/api';
 
 interface ChatPanelProps {
   onClose?: () => void;
@@ -10,12 +11,63 @@ interface ChatPanelProps {
 export function ChatPanel({ onClose }: ChatPanelProps) {
   const { chatHistory, isChatLoading, focusedElement, sceneGraph, sendChatMessage } = useSceneStore();
   const [input, setInput] = useState('');
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [errorId, setErrorId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Cache fetched audio per message id so repeat taps are instant
+  const audioCacheRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory, isChatLoading]);
+
+  const playAudio = (base64: string, msgId: string) => {
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      const audio = new Audio(`data:audio/mpeg;base64,${base64}`);
+      audioRef.current = audio;
+      audio.play().catch(() => {});
+      audio.onended = () => setSpeakingId(null);
+      audio.onerror = () => setSpeakingId(null);
+      setSpeakingId(msgId);
+    } catch {
+      setSpeakingId(null);
+    }
+  };
+
+  const handleSpeak = async (msgId: string, content: string, cachedAudio?: string) => {
+    // If already speaking this message, stop it
+    if (speakingId === msgId) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setSpeakingId(null);
+      return;
+    }
+
+    const cached = cachedAudio || audioCacheRef.current.get(msgId);
+    if (cached) {
+      playAudio(cached, msgId);
+      return;
+    }
+
+    setSpeakingId(msgId);
+    setErrorId(null);
+    try {
+      const base64 = await fetchTTS(content);
+      audioCacheRef.current.set(msgId, base64);
+      playAudio(base64, msgId);
+    } catch (err) {
+      console.error('[TTS] playback failed:', err);
+      setSpeakingId(null);
+      setErrorId(msgId);
+      setTimeout(() => setErrorId(null), 2000);
+    }
+  };
 
   const handleSend = () => {
     if (!input.trim() || isChatLoading) return;
@@ -65,6 +117,16 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
               <span className="atlas-msg-avatar">◈</span>
             )}
             <p className="atlas-msg-text">{msg.content}</p>
+            {msg.role === 'assistant' && (
+              <button
+                className={`atlas-msg-speak${speakingId === msg.id ? ' atlas-msg-speak--active' : ''}${errorId === msg.id ? ' atlas-msg-speak--error' : ''}`}
+                aria-label={speakingId === msg.id ? 'Stop audio' : 'Play audio'}
+                onClick={() => handleSpeak(msg.id, msg.content, msg.audioBase64)}
+                disabled={speakingId !== null && speakingId !== msg.id}
+              >
+                {errorId === msg.id ? '!' : speakingId === msg.id ? '■' : '▶'}
+              </button>
+            )}
           </div>
         ))}
         {isChatLoading && (
