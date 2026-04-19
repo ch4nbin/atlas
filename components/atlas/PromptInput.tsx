@@ -417,9 +417,7 @@ export function PromptInput({ mode }: PromptInputProps) {
                   <div className="atlas-library-title-block">
                     <span className="atlas-library-track-kicker atlas-mono">{t.kicker}</span>
                     <h2 className="atlas-library-heading">
-                      <span className="atlas-instrument" style={{ fontStyle: 'italic', fontWeight: 500 }}>{t.name}</span>
-                      {' '}
-                      <span style={{ color: 'rgba(0,0,0,0.55)', fontWeight: 300 }}>Library</span>
+                      {t.name} <span style={{ color: 'rgba(0,0,0,0.55)', fontWeight: 300 }}>Library</span>
                     </h2>
                   </div>
                   <div className="atlas-library-search-row atlas-glass atlas-library-search-visible">
@@ -478,13 +476,7 @@ export function PromptInput({ mode }: PromptInputProps) {
                   </span>
                   <button className="atlas-map-close-btn" onClick={() => setSelectedMap(null)}>✕</button>
                 </div>
-                <h2 className="atlas-map-title-new">
-                  <span className="atlas-instrument" style={{ fontStyle: 'italic', fontWeight: 500 }}>
-                    {selectedMap.title.split(' ')[0]}
-                  </span>
-                  {' '}
-                  <span style={{ fontWeight: 300 }}>{selectedMap.title.split(' ').slice(1).join(' ')}</span>
-                </h2>
+                <h2 className="atlas-map-title-new">{selectedMap.title}</h2>
                 <div className="atlas-map-chips-row">
                   {[selectedMap.era, selectedMap.region, 'AI Guide'].map(c => (
                     <span key={c} className="atlas-map-chip-new atlas-chip-glass">{c}</span>
@@ -499,7 +491,7 @@ export function PromptInput({ mode }: PromptInputProps) {
                     disabled={isLoading}
                     type="button"
                   >
-                    Enter {selectedMap.title.split(' ')[0]} <span>→</span>
+                    Enter {selectedMap.title} →
                   </button>
                   <button className="atlas-map-close-pill atlas-btn-light" onClick={() => setSelectedMap(null)} type="button">
                     Close
@@ -520,9 +512,7 @@ export function PromptInput({ mode }: PromptInputProps) {
               <span className="atlas-loading-dot-new atlas-pulse-dot" />
               <span className="atlas-loading-label atlas-mono">Building · World Labs</span>
             </div>
-            <h3 className="atlas-loading-title-new">
-              <span className="atlas-instrument" style={{ fontStyle: 'italic' }}>Compiling</span> your world
-            </h3>
+            <h3 className="atlas-loading-title-new">Compiling your world</h3>
             <p className="atlas-loading-step-new">{loadingStep || 'Preparing world assets…'}</p>
             <div className="atlas-loading-bar-new">
               <div className="atlas-shimmer-fill" />

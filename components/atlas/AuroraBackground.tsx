@@ -80,10 +80,10 @@ export function AuroraBackground() {
       {/* vignette bloom */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(900px 600px at 50% 45%, rgba(255,255,255,0.28), transparent 65%), radial-gradient(1200px 700px at 20% 10%, rgba(255,255,255,0.20), transparent 70%)',
+        background: 'radial-gradient(900px 600px at 50% 45%, rgba(255,255,255,0.14), transparent 65%), radial-gradient(1200px 700px at 20% 10%, rgba(255,255,255,0.10), transparent 70%)',
       }} />
       {/* white veil */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.20)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }} />
     </div>
   );
 }

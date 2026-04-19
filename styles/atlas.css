@@ -1654,9 +1654,10 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.45rem 0.75rem;
-  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  height: 2.75rem;
   border-radius: 9999px;
+  overflow: hidden;
 }
 .atlas-header-logo {
   flex-shrink: 0;
@@ -1682,15 +1683,16 @@
 }
 .atlas-header-about {
   flex-shrink: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.70);
-  padding: 0.5rem 0.75rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: inherit;
+  line-height: 1;
   transition: color 0.15s, background 0.15s;
 }
 .atlas-header-about:hover { color: rgba(0, 0, 0, 1); background: rgba(255, 255, 255, 0.40); }
@@ -2085,9 +2087,9 @@
 .atlas-map-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(10, 10, 20, 0.38);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(8, 8, 18, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 .atlas-map-modal-new {
   position: relative;
@@ -2095,6 +2097,11 @@
   max-width: 48rem;
   border-radius: 1.75rem;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(32px) saturate(1.2);
+  -webkit-backdrop-filter: blur(32px) saturate(1.2);
+  box-shadow: 0 32px 80px rgba(10, 10, 20, 0.30);
 }
 .atlas-map-grid { display: grid; }
 @media (min-width: 768px) { .atlas-map-grid { grid-template-columns: 1.1fr 1fr; } }

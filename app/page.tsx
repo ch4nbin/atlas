@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { AuroraBackground } from "@/components/atlas/AuroraBackground"
+import '@/styles/atlas.css'
 import {
   Dialog,
   DialogContent,
@@ -20,48 +21,18 @@ export default function LandingPage() {
       <AuroraBackground />
 
       {/* Header pill — same as explore */}
-      <header style={{ position: 'relative', zIndex: 30, padding: '1rem 1rem 0' }}>
+      <header className="atlas-header">
         <div
-          className="mx-auto w-full"
-          style={{
-            maxWidth: '72rem',
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.45rem 0.75rem', minHeight: '2.75rem',
-            borderRadius: '9999px',
-            background: 'rgba(255,255,255,0.20)',
-            border: '1px solid rgba(255,255,255,0.40)',
-            backdropFilter: 'blur(24px) saturate(1.1)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.1)',
-            boxShadow: '0 20px 60px rgba(20,20,20,0.15)',
-          }}
+          className="atlas-header-pill atlas-glass"
+          style={{ maxWidth: '72rem', margin: '0 auto' }}
         >
-          <span
-            style={{
-              flexShrink: 0, fontSize: '0.875rem', fontWeight: 600,
-              letterSpacing: '0.04em', color: 'rgba(0,0,0,0.80)', padding: '0 0.25rem',
-            }}
-          >
-            Atlas
-          </span>
-          <p style={{
-            flex: 1, minWidth: 0, textAlign: 'center',
-            fontSize: '0.72rem', fontWeight: 500, color: 'rgba(0,0,0,0.55)',
-            letterSpacing: '0.02em', pointerEvents: 'none', userSelect: 'none', margin: 0,
-          }}>
-            AI-Powered Immersive Learning
-          </p>
+          <span className="atlas-header-logo" style={{ textDecoration: 'none' }}>Atlas</span>
+          <p className="atlas-header-center">AI-Powered Immersive Learning</p>
           <nav style={{ flexShrink: 0 }}>
             <button
               type="button"
               onClick={() => setModal("about")}
-              style={{
-                fontSize: '0.875rem', fontWeight: 500, color: 'rgba(0,0,0,0.70)',
-                padding: '0.5rem 0.75rem', borderRadius: '9999px',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: 'inherit', transition: 'color 0.15s, background 0.15s',
-              }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.40)'; (e.target as HTMLElement).style.color = 'rgba(0,0,0,1)'; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.background = 'transparent'; (e.target as HTMLElement).style.color = 'rgba(0,0,0,0.70)'; }}
+              className="atlas-header-about"
             >
               About
             </button>
@@ -88,7 +59,7 @@ export default function LandingPage() {
           letterSpacing: '-0.02em', fontWeight: 300, color: 'rgba(0,0,0,0.85)',
           margin: '0 0 1rem',
         }}>
-          <span className="instrument" style={{ fontStyle: 'italic', fontWeight: 500 }}>Step Into</span>
+          <span className="atlas-instrument" style={{ fontStyle: 'italic', fontWeight: 500 }}>Step Into</span>
           {' '}History
           <br />
           <span style={{ fontWeight: 300, color: 'rgba(0,0,0,0.85)' }}>With Atlas</span>
