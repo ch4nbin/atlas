@@ -754,17 +754,19 @@ export function SceneViewer() {
         </div>
       )}
 
-      <div className="atlas-world-meta">
-        <div className="atlas-world-title">{world.display_name || 'Generated World'}</div>
-        <a
-          className="atlas-world-open"
-          href={world.world_marble_url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open in Marble
-        </a>
-      </div>
+      {!stemExperiment?.isActive && (
+        <div className="atlas-world-meta">
+          <div className="atlas-world-title">{world.display_name || 'Generated World'}</div>
+          <a
+            className="atlas-world-open"
+            href={world.world_marble_url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Marble
+          </a>
+        </div>
+      )}
 
       {sparkError && (
         <div className="atlas-mode-badge atlas-mode-backend_only">

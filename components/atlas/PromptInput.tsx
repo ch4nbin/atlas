@@ -181,6 +181,7 @@ function findClosestWorld(query: string): MapData {
 export function PromptInput() {
   const { loadWorldById, reset, isLoading, loadingStep, sceneGraph, error, prompt } =
     useSceneStore();
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [trackView, setTrackView] = useState<'split' | 'humanities' | 'stem'>('split');
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
@@ -312,10 +313,13 @@ export function PromptInput() {
           </Link>
           <p className="atlas-header-center">AI-Powered Immersive Learning — Explore</p>
           <nav>
-            <span style={{ fontSize: '0.72rem', color: 'rgba(0,0,0,0.45)', letterSpacing: '0.04em', padding: '0.5rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <img src="/atlas-logo-transparent.png" alt="" aria-hidden="true" style={{ width: '1.1rem', height: '1.1rem', objectFit: 'contain', opacity: 0.55 }} />
-              Atlas
-            </span>
+            <button
+              type="button"
+              onClick={() => setAboutOpen(true)}
+              className="atlas-header-about"
+            >
+              About
+            </button>
           </nav>
         </div>
       </header>
@@ -515,6 +519,69 @@ export function PromptInput() {
             <p className="atlas-loading-note atlas-mono">
               This may take a few minutes · 3-D assets stream in progressively
             </p>
+          </div>
+        </div>
+      )}
+
+      {aboutOpen && (
+        <div className="atlas-map-overlay atlas-fade-in">
+          <div className="atlas-map-backdrop" onClick={() => setAboutOpen(false)} />
+          <div style={{
+            position: 'relative', width: '100%', maxWidth: '30rem',
+            borderRadius: '1.75rem', overflow: 'hidden',
+            background: 'rgba(255,255,255,0.92)',
+            border: '1px solid rgba(255,255,255,0.70)',
+            backdropFilter: 'blur(32px) saturate(1.2)',
+            WebkitBackdropFilter: 'blur(32px) saturate(1.2)',
+            boxShadow: '0 32px 80px rgba(10,10,20,0.28)',
+          }}>
+            <div style={{ position: 'relative', height: '160px', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,#fcd5e0,#e8789a 55%,#b83865)', filter: 'blur(2px) saturate(1.1)', transform: 'scale(1.04)' }} />
+              <div style={{
+                position: 'absolute', inset: 0, mixBlendMode: 'overlay', opacity: 0.22,
+                backgroundImage: 'radial-gradient(rgba(255,255,255,0.55) 1px, transparent 1px)',
+                backgroundSize: '3px 3px',
+              }} />
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0 16px, rgba(0,0,0,0.04) 16px 32px)',
+                mixBlendMode: 'soft-light',
+              }} />
+              <div style={{ position: 'absolute', top: '1.1rem', left: '1.5rem', right: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="atlas-mono" style={{ color: 'rgba(255,255,255,0.70)', fontSize: '0.6rem' }}>
+                  Atlas · About
+                </span>
+                <button onClick={() => setAboutOpen(false)} style={{
+                  background: 'rgba(255,255,255,0.20)', border: '1px solid rgba(255,255,255,0.35)',
+                  borderRadius: '9999px', width: '1.75rem', height: '1.75rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem',
+                  backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                  transition: 'background 0.15s',
+                }}>✕</button>
+              </div>
+              <div style={{ position: 'absolute', bottom: '1.25rem', left: '1.5rem', right: '1.5rem' }}>
+                <h2 style={{
+                  fontSize: '1.75rem', fontWeight: 500, letterSpacing: '-0.02em',
+                  color: '#fff', margin: 0,
+                  textShadow: '0 1px 12px rgba(0,0,0,0.18)',
+                }}>
+                  About Atlas
+                </h2>
+              </div>
+            </div>
+
+            <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  'Atlas is an AI-powered immersive learning platform that brings history and science to life through interactive 3D environments.',
+                  'By combining generative 3D scene creation with a contextual AI guide, Atlas lets you explore any moment in history — or any system in science — the way you\'d explore a real place.',
+                  'Built for students, educators, and curious minds. No VR headset required.',
+                ].map((p, i) => (
+                  <p key={i} style={{ fontSize: '0.875rem', color: 'rgba(0,0,0,0.62)', lineHeight: 1.7, margin: 0 }}>{p}</p>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
