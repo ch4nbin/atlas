@@ -4,12 +4,6 @@ import { useState } from "react"
 import Link from "next/link"
 import { AuroraBackground } from "@/components/atlas/AuroraBackground"
 import '@/styles/atlas.css'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 type ModalType = "how-it-works" | "about" | null
 
@@ -109,44 +103,96 @@ export default function LandingPage() {
       </main>
 
       {/* Modals */}
-      <Dialog open={modal !== null} onOpenChange={(open) => !open && setModal(null)}>
-        <DialogContent className="border border-white/40 bg-white/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(20,20,20,0.15)]">
-          {modal === "how-it-works" && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl font-medium text-black/90">How It Works</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 text-sm text-black/70 leading-relaxed">
-                {[
-                  { n: 1, title: 'Pick a track', body: 'Choose Humanities for historical walkthroughs or STEM for interactive science experiments.' },
-                  { n: 2, title: 'Step inside', body: 'Atlas loads an immersive 3D environment you can explore freely in your browser.' },
-                  { n: 3, title: 'Learn through discovery', body: 'Your AI guide answers questions in context as you explore — click anything to learn more.' },
-                ].map(({ n, title, body }) => (
-                  <div key={n} className="flex gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-black/10 flex items-center justify-center text-xs font-semibold text-black/70">{n}</span>
-                    <div>
-                      <p className="font-medium text-black/85 mb-0.5">{title}</p>
-                      <p>{body}</p>
-                    </div>
+      {modal !== null && (() => {
+        const isAbout = modal === 'about';
+        const wash = isAbout
+          ? 'linear-gradient(135deg,#fcd5e0,#e8789a 55%,#b83865)'
+          : 'linear-gradient(135deg,#c8e8f8,#78b8e8 55%,#3070b8)';
+        return (
+          <div className="atlas-map-overlay atlas-fade-in">
+            <div className="atlas-map-backdrop" onClick={() => setModal(null)} />
+            <div style={{
+              position: 'relative', width: '100%', maxWidth: '30rem',
+              borderRadius: '1.75rem', overflow: 'hidden',
+              background: 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(255,255,255,0.70)',
+              backdropFilter: 'blur(32px) saturate(1.2)',
+              WebkitBackdropFilter: 'blur(32px) saturate(1.2)',
+              boxShadow: '0 32px 80px rgba(10,10,20,0.28)',
+            }}>
+              {/* Gradient header — styled like the track cards */}
+              <div style={{ position: 'relative', height: '160px', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 0, background: wash, filter: 'blur(2px) saturate(1.1)', transform: 'scale(1.04)' }} />
+                {/* grain */}
+                <div style={{
+                  position: 'absolute', inset: 0, mixBlendMode: 'overlay', opacity: 0.22,
+                  backgroundImage: 'radial-gradient(rgba(255,255,255,0.55) 1px, transparent 1px)',
+                  backgroundSize: '3px 3px',
+                }} />
+                {/* diagonal stripe */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0 16px, rgba(0,0,0,0.04) 16px 32px)',
+                  mixBlendMode: 'soft-light',
+                }} />
+                {/* kicker + close */}
+                <div style={{ position: 'absolute', top: '1.1rem', left: '1.5rem', right: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span className="atlas-mono" style={{ color: 'rgba(255,255,255,0.70)', fontSize: '0.6rem' }}>
+                    {isAbout ? 'Atlas · About' : 'Atlas · Guide'}
+                  </span>
+                  <button onClick={() => setModal(null)} style={{
+                    background: 'rgba(255,255,255,0.20)', border: '1px solid rgba(255,255,255,0.35)',
+                    borderRadius: '9999px', width: '1.75rem', height: '1.75rem',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem',
+                    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                    transition: 'background 0.15s',
+                  }}>✕</button>
+                </div>
+                {/* title overlaid at bottom of header */}
+                <div style={{ position: 'absolute', bottom: '1.25rem', left: '1.5rem', right: '1.5rem' }}>
+                  <h2 style={{
+                    fontSize: '1.75rem', fontWeight: 500, letterSpacing: '-0.02em',
+                    color: '#fff', margin: 0,
+                    textShadow: '0 1px 12px rgba(0,0,0,0.18)',
+                  }}>
+                    {isAbout ? 'About Atlas' : 'How It Works'}
+                  </h2>
+                </div>
+              </div>
+
+              {/* Content area */}
+              <div style={{ padding: '1.5rem 1.75rem 1.75rem' }}>
+                {isAbout ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {[
+                      'Atlas is an AI-powered immersive learning platform that brings history and science to life through interactive 3D environments.',
+                      'By combining generative 3D scene creation with a contextual AI guide, Atlas lets you explore any moment in history — or any system in science — the way you\'d explore a real place.',
+                      'Built for students, educators, and curious minds. No VR headset required.',
+                    ].map((p, i) => (
+                      <p key={i} style={{ fontSize: '0.875rem', color: 'rgba(0,0,0,0.62)', lineHeight: 1.7, margin: 0 }}>{p}</p>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {[
+                      { title: 'Pick a track', body: 'Choose Humanities for historical walkthroughs or STEM for interactive science experiments.' },
+                      { title: 'Step inside', body: 'Atlas loads an immersive 3D environment you can explore freely in your browser.' },
+                      { title: 'Learn through discovery', body: 'Your AI guide answers questions in context as you explore — click anything to learn more.' },
+                    ].map(({ title, body }, i) => (
+                      <div key={title}>
+                        {i > 0 && <div style={{ height: '1px', background: 'rgba(0,0,0,0.07)', margin: '0.9rem 0' }} />}
+                        <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'rgba(0,0,0,0.85)', margin: '0 0 0.25rem' }}>{title}</p>
+                        <p style={{ fontSize: '0.8125rem', color: 'rgba(0,0,0,0.58)', lineHeight: 1.65, margin: 0 }}>{body}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </>
-          )}
-          {modal === "about" && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl font-medium text-black/90">About Atlas</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 text-sm text-black/70 leading-relaxed">
-                <p>Atlas is an AI-powered immersive learning platform that brings history and science to life through interactive 3D environments.</p>
-                <p>We believe the best way to understand the world is to experience it. By combining generative 3D scene creation with a contextual AI guide, Atlas lets you explore any moment in history — or any system in science — the way you&apos;d explore a real place.</p>
-                <p>Built for students, educators, and curious minds. No VR headset required.</p>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   )
 }
