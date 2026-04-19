@@ -98,6 +98,19 @@ export function SceneViewer() {
         scene.add(splat);
 
         const isStemExperimentScene = sceneGraph?.scene_type === 'science_experiment';
+        if (!isStemExperimentScene) {
+          // Humanities scenes feel better with a lower eye height.
+          camera.position.set(0.5, 1.02, 4);
+          const worldId = world?.world_id || world?.id || '';
+          const label = `${world?.display_name || ''} ${sceneGraph?.setting?.location || ''}`.toLowerCase();
+          const isCastleWorld =
+            worldId === '7dedbd85-3dbd-49b3-8750-9280aaca1da5' ||
+            label.includes('medieval castle');
+          if (isCastleWorld) {
+            // Castle-specific spawn: start much farther forward.
+            camera.position.set(0.5, 1.02, 1.65);
+          }
+        }
         let plantVisual: any = null;
         let petalsGroup: any = null;
         let flowerCenter: any = null;
