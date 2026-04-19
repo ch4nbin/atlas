@@ -19,7 +19,7 @@ services:
       repo: ch4nbin/atlas   # ← replace with your repo
       branch: main
       deploy_on_push: true
-    build_command: npm ci --legacy-peer-deps && npm run build
+    build_command: npm ci && npm run build
     run_command: npm start
     environment_slug: node-js
     instance_size_slug: apps-s-1vcpu-1gb
@@ -33,6 +33,8 @@ services:
       # routed to the backend service below. Do not change this value.
       - key: NEXT_PUBLIC_BACKEND_URL
         value: ""
+      - key: npm_config_legacy_peer_deps
+        value: "true"
 
   # ── Backend (Express) ─────────────────────────────────────────────────────
   - name: backend
